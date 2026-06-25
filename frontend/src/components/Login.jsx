@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Login() {
+export default function Login({ theme, setTheme }) {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -55,9 +55,9 @@ export default function Login() {
   }
 
   return (
-    <div className="w-full max-w-md bg-surface-app border border-border-app p-8 flex flex-col gap-6">
+    <div className="w-full max-w-md bg-surface-app border border-accent-app/30 p-8 flex flex-col gap-6">
       <div className="flex flex-col gap-2 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-text-primary">PolloAsado</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-accent-app">PolloAsado</h2>
         <p className="text-xs text-text-secondary">
           {isSignUp ? 'Crea una cuenta para empezar' : 'Ingresa tus credenciales para continuar'}
         </p>
@@ -105,7 +105,7 @@ export default function Login() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Tu nombre"
-              className="bg-bg-app border border-border-app text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+              className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
             />
           </div>
         )}
@@ -121,7 +121,7 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="ejemplo@correo.com"
-            className="bg-bg-app border border-border-app text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+            className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="bg-bg-app border border-border-app text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+            className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
           />
         </div>
 
@@ -160,6 +160,32 @@ export default function Login() {
           {loading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
         </button>
       </form>
+
+      {/* Theme Picker inside Login page */}
+      {theme && setTheme && (
+        <div className="flex flex-col gap-2 pt-4 border-t border-accent-app/20 items-center">
+          <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Paleta de color</span>
+          <div className="flex gap-1.5">
+            {[
+              { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
+              { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
+              { id: 'sky', name: 'Azul', color: 'bg-sky-400' },
+              { id: 'amber', name: 'Oro', color: 'bg-amber-400' },
+              { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                className={`w-5 h-5 rounded-full border ${t.color} cursor-pointer transition-transform duration-100 ${
+                  theme === t.id ? 'scale-110 border-text-primary' : 'border-border-app hover:scale-105'
+                }`}
+                title={t.name}
+                aria-label={`Cambiar a tema ${t.name}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

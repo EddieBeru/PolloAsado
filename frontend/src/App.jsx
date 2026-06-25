@@ -9,9 +9,10 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Apply theme dynamically to the body element
+  // Apply theme dynamically to the body and documentElement
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
   // Monitor Supabase Authentication state
@@ -54,9 +55,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-app text-text-primary flex justify-center items-start pt-12 pb-12">
+    <div className="min-h-screen bg-bg-app text-text-primary flex justify-center items-start">
       {!session ? (
-        <Login />
+        <Login theme={theme} setTheme={setTheme} />
       ) : (
         <Layout
           user={session.user}

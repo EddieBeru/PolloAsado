@@ -20,23 +20,23 @@
 }
 
 /* User Customizable Color Palettes (Flat Accents only) */
-body[data-theme="slate"] {
+[data-theme="slate"] {
   --accent-app: #94a3b8;      /* Slate 400 */
 }
 
-body[data-theme="emerald"] {
+[data-theme="emerald"] {
   --accent-app: #34d399;      /* Emerald 400 */
 }
 
-body[data-theme="sky"] {
+[data-theme="sky"] {
   --accent-app: #38bdf8;      /* Sky 400 */
 }
 
-body[data-theme="amber"] {
+[data-theme="amber"] {
   --accent-app: #fbbf24;      /* Amber 400 */
 }
 
-body[data-theme="rose"] {
+[data-theme="rose"] {
   --accent-app: #f43f5e;      /* Rose 500 */
 }
 
