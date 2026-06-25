@@ -12,6 +12,7 @@ This file defines the strict guidelines, constraints, database schemas, and conv
 There is no separate table for "Deseos". Instead, a **Deseo** is represented as a target-driven item in the `ahorros` (savings) table. 
 * To implement a desire: The user sets a saving target with a specific `nombre` (name) and `monto_meta` (target amount).
 * Development should present these items in the UI as "Deseos / Metas de Ahorro" to show progress toward purchase goals.
+* Do not present them to the user as Deseos. You can point out Ahorros can be used to plan future purchases but should not be main focus.
 
 ---
 
@@ -26,7 +27,7 @@ All development by AI agents must respect the following limits:
 
 ### Frontend Tech Stack & Styles (Tailwind CSS v4):
 * **Styling Framework**: Tailwind CSS v4 is used. Configuration is done directly in `src/index.css` using the `@theme` directive.
-* **Minimalist Aesthetic**: The design must be strictly **minimalist** and **dark-mode first**, utilizing **flat colors**. Flashy gradients, glowing highlights, and colorful borders are strictly prohibited.
+* **Minimalist Aesthetic**: The design must be **minimalist** and **dark-mode first**, utilizing **flat colors**. Flashy gradients, glowing highlights, and neon effects are strictly prohibited. However, moderate use of color is permitted: borders can use the active theme's accent color (provided they are colored uniformly across the component/container rather than emphasizing a single border), and titles, headings, and specific indicators may have color accents, keeping the balance professional and not overly saturated.
 * **Customizable Palette**: Colors are defined via CSS variables mapped to Tailwind colors (e.g. `bg-app`, `surface-app`, `text-primary`, `accent-app`, `border-app`). The theme changes by altering the `data-theme` attribute on the `<body>`.
 * **No Conflicting CSS**: Do not install other CSS frameworks. Ensure custom Tailwind usage matches this clean, flat aesthetic.
 
