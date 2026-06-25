@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import Income from './Income'
+import Settings from './Settings'
 
 export default function Layout({ user, onLogout, theme, setTheme }) {
   const tabs = [
@@ -7,7 +9,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     { id: 'expenses', name: 'Gastos' },
     { id: 'savings', name: 'Ahorros' },
     { id: 'budgets', name: 'Presupuestos' },
-    { id: 'debts', name: 'Deudas' }
+    { id: 'debts', name: 'Deudas' },
+    { id: 'settings', name: 'Ajustes' }
   ]
 
   const [activeTab, setActiveTab] = useState('overview')
@@ -116,19 +119,25 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
       <main className="flex-1 flex flex-col min-w-0 pb-[72px] md:pb-0">
         <div className="w-full max-w-[1600px] mx-auto p-5 md:p-8 lg:p-12 flex-1 flex flex-col">
 
-          <div className="w-full flex-1 border border-dashed border-accent-app/30 bg-surface-app/10 p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[400px] rounded-sm">
-            <div className="max-w-xl flex flex-col gap-3">
-              <h2 className="text-2xl md:text-3xl font-bold text-accent-app tracking-wide uppercase">
-                {activeTabName}
-              </h2>
-              <p className="text-sm md:text-base text-text-primary font-medium mt-2">
-                Contenido vacío para futura referencia
-              </p>
-              <p className="text-xs md:text-sm text-text-secondary mt-2 leading-relaxed max-w-md mx-auto">
-                Este espacio está reservado para la interfaz interactiva de <span className="font-semibold text-text-primary">{activeTabName}</span>. Los componentes y vistas correspondientes usarán todo el ancho disponible.
-              </p>
+          {activeTab === 'income' ? (
+            <Income user={user} />
+          ) : activeTab === 'settings' ? (
+            <Settings user={user} onLogout={onLogout} />
+          ) : (
+            <div className="w-full flex-1 border border-dashed border-accent-app/30 bg-surface-app/10 p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[400px] rounded-sm">
+              <div className="max-w-xl flex flex-col gap-3">
+                <h2 className="text-2xl md:text-3xl font-bold text-accent-app tracking-wide uppercase">
+                  {activeTabName}
+                </h2>
+                <p className="text-sm md:text-base text-text-primary font-medium mt-2">
+                  Contenido vacío para futura referencia
+                </p>
+                <p className="text-xs md:text-sm text-text-secondary mt-2 leading-relaxed max-w-md mx-auto">
+                  Este espacio está reservado para la interfaz interactiva de <span className="font-semibold text-text-primary">{activeTabName}</span>. Los componentes y vistas correspondientes usarán todo el ancho disponible.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Minimal Footer */}
           <footer className="w-full mt-10 pt-6 border-t border-accent-app/20 text-center text-[10px] text-text-secondary font-mono">

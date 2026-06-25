@@ -2,6 +2,7 @@
 CREATE TABLE perfiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   nombre TEXT,
+  preferencias JSONB DEFAULT '{"categorias_ingreso": [], "categorias_gasto": [], "tema": "slate", "divisa_principal": "CRC", "divisas_activas": ["CRC", "USD"]}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -15,6 +16,11 @@ CREATE TABLE ingresos (
   fecha DATE NOT NULL,
   es_recurrente BOOLEAN DEFAULT FALSE,
   frecuencia TEXT, -- 'mensual', 'quincenal', 'semanal'
+  limite_recurrencia INT,
+  divisa_original TEXT,
+  monto_original DECIMAL(12,2),
+  tasa_cambio DECIMAL(12,6),
+  grupo_recurrencia UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -79,5 +85,27 @@ CREATE TABLE presupuestos (
   monto_limite DECIMAL(12,2) NOT NULL,
   mes INT NOT NULL,   -- 1-12
   anio INT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Desglose para Ingresos
+CREATE TABLE desglose_ingresos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ingreso_id UUID REFERENCES ingresos(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  descripcion TEXT NOT NULL,
+  monto DECIMAL(12,2) NOT NULL,
+  es_deduccion BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Desglose para Gastos
+CREATE TABLE desglose_gastos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  gasto_id UUID REFERENCES gastos(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  descripcion TEXT NOT NULL,
+  monto DECIMAL(12,2) NOT NULL,
+  es_deduccion BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
