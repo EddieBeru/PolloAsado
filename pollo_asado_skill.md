@@ -24,6 +24,10 @@ All development by AI agents must respect the following limits:
 * **Schema Reference**: The database is structured exactly according to [supabase/squema.sql](file:///home/eddieberu/Documents/projects/personal-projects/PolloAsado/supabase/squema.sql) and [supabase/rls.sql](file:///home/eddieberu/Documents/projects/personal-projects/PolloAsado/supabase/rls.sql).
 * **Schema Modification**: Do NOT modify the tables, columns, or relations of the database directly on the live database. Any schema alterations must go through local migration files under `supabase/migrations/` using proper SQL syntax.
 * **RLS (Row Level Security)**: Every table must have RLS active. All queries fetching, inserting, or modifying data must filter by the authenticated user's ID (`auth.uid() = user_id`).
+* **Sub-transactions & Breakdowns**: For flexible and deep insights/reporting, any "desglose" (breakdown/split bills/deductions) inside an Income or Expense MUST be modeled using strict relational tables (e.g., `desglose_ingresos`, `desglose_gastos`) connected via Foreign Keys. Do not use `JSONB` columns for relational or report-heavy data.
+* **Local-First & Offline Sync Architecture**: The application must support PWA capabilities (offline usage) and store data locally using IndexedDB (`localforage`). Sync with Supabase happens in the background.
+* **User Preferences & Categories**: User-defined custom categories and UI preferences (e.g., themes) are stored in the `perfiles` table using a `preferencias JSONB` column.
+* **MANDATORY SKILL UPDATES**: The AI must proactively update this skill file (`pollo_asado_skill.md`) with every piece of important architectural, design, or project-wide information that arrives or is decided upon during conversations. This is a strict clause.
 
 ### Frontend Tech Stack & Styles (Tailwind CSS v4):
 * **Styling Framework**: Tailwind CSS v4 is used. Configuration is done directly in `src/index.css` using the `@theme` directive.
@@ -61,6 +65,7 @@ For fast access, the database schema is replicated below:
 CREATE TABLE perfiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   nombre TEXT,
+  preferencias JSONB DEFAULT '{"categorias_ingreso": [], "categorias_gasto": [], "tema": "slate"}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -5,7 +5,12 @@ import Layout from './components/Layout'
 import './App.css'
 
 function App() {
-  const [theme, setTheme] = useState('slate')
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pollo_asado_theme') || 'slate'
+    }
+    return 'slate'
+  })
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -13,6 +18,7 @@ function App() {
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
     document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('pollo_asado_theme', theme)
   }, [theme])
 
   // Monitor Supabase Authentication state
