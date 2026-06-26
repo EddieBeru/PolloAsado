@@ -55,15 +55,15 @@ export default function Login({ theme, setTheme }) {
   }
 
   return (
-    <div className="w-full max-w-md bg-surface-app border border-accent-app/30 p-8 flex flex-col gap-6">
+    <div className="w-full max-w-md card flex flex-col gap-8 my-auto shadow-2xl shadow-bg-app">
       <div className="flex flex-col gap-2 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-accent-app">PolloAsado</h2>
-        <p className="text-xs text-text-secondary">
-          {isSignUp ? 'Crea una cuenta para empezar' : 'Ingresa tus credenciales para continuar'}
+        <h2 className="heading">PolloAsado</h2>
+        <p className="text-sm text-text-secondary">
+          {isSignUp ? 'Crea una cuenta' : 'Ingresa tus credenciales'}
         </p>
       </div>
 
-      <div className="flex border-b border-border-app">
+      <div className="flex bg-bg-app rounded-2xl p-1">
         <button
           type="button"
           onClick={() => {
@@ -71,9 +71,8 @@ export default function Login({ theme, setTheme }) {
             setError(null)
             setSuccessMessage('')
           }}
-          className={`flex-1 pb-2 text-sm font-semibold tracking-wide transition-colors duration-150 cursor-pointer ${
-            !isSignUp ? 'text-accent-app border-b-2 border-accent-app' : 'text-text-secondary hover:text-text-primary'
-          }`}
+          className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${!isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'
+            }`}
         >
           Iniciar Sesión
         </button>
@@ -84,18 +83,17 @@ export default function Login({ theme, setTheme }) {
             setError(null)
             setSuccessMessage('')
           }}
-          className={`flex-1 pb-2 text-sm font-semibold tracking-wide transition-colors duration-150 cursor-pointer ${
-            isSignUp ? 'text-accent-app border-b-2 border-accent-app' : 'text-text-secondary hover:text-text-primary'
-          }`}
+          className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'
+            }`}
         >
           Registrarse
         </button>
       </div>
 
-      <form onSubmit={handleAuth} className="flex flex-col gap-4">
+      <form onSubmit={handleAuth} className="flex flex-col gap-5">
         {isSignUp && (
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="name-input" className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name-input" className="text-sm font-semibold text-text-primary ml-1">
               Nombre
             </label>
             <input
@@ -105,13 +103,13 @@ export default function Login({ theme, setTheme }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Tu nombre"
-              className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+              className="input"
             />
           </div>
         )}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email-input" className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email-input" className="text-sm font-semibold text-text-primary ml-1">
             Correo Electrónico
           </label>
           <input
@@ -121,12 +119,12 @@ export default function Login({ theme, setTheme }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="ejemplo@correo.com"
-            className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+            className="input"
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password-input" className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="password-input" className="text-sm font-semibold text-text-primary ml-1">
             Contraseña
           </label>
           <input
@@ -136,18 +134,18 @@ export default function Login({ theme, setTheme }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="bg-bg-app border border-accent-app/20 text-text-primary px-3 py-2 text-sm outline-none focus:border-accent-app transition-colors duration-150"
+            className="input"
           />
         </div>
 
         {error && (
-          <div className="text-xs text-rose-500 font-medium bg-rose-950/20 border border-rose-900/50 p-3">
+          <div className="text-sm text-rose-500 font-medium bg-rose-950/20 border border-rose-900/50 rounded-xl p-4">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="text-xs text-emerald-400 font-medium bg-emerald-950/20 border border-emerald-900/50 p-3">
+          <div className="text-sm text-emerald-400 font-medium bg-emerald-950/20 border border-emerald-900/50 rounded-xl p-4">
             {successMessage}
           </div>
         )}
@@ -155,7 +153,7 @@ export default function Login({ theme, setTheme }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent-app hover:bg-opacity-90 active:scale-[0.98] text-bg-app font-bold py-2.5 text-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary w-full mt-2"
         >
           {loading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
         </button>
@@ -163,9 +161,9 @@ export default function Login({ theme, setTheme }) {
 
       {/* Theme Picker inside Login page */}
       {theme && setTheme && (
-        <div className="flex flex-col gap-2 pt-4 border-t border-accent-app/20 items-center">
-          <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Paleta de color</span>
-          <div className="flex gap-1.5">
+        <div className="flex flex-col gap-3 pt-6 border-t border-border-app/30 items-center">
+          <span className="text-xs font-semibold text-text-secondary">Paleta de color</span>
+          <div className="flex gap-2">
             {[
               { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
               { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
@@ -176,9 +174,8 @@ export default function Login({ theme, setTheme }) {
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}
-                className={`w-5 h-5 rounded-full border ${t.color} cursor-pointer transition-transform duration-100 ${
-                  theme === t.id ? 'scale-110 border-text-primary' : 'border-border-app hover:scale-105'
-                }`}
+                className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-150 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
+                  }`}
                 title={t.name}
                 aria-label={`Cambiar a tema ${t.name}`}
               />
