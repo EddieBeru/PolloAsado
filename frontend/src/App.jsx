@@ -44,17 +44,16 @@ function App() {
     await supabase.auth.signOut()
   }
 
-  // Minimalist Skeleton screen loader matching the app's flat, dark-mode style
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-app text-text-primary px-6 py-12 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-surface-app border border-border-app p-8 flex flex-col gap-6 animate-pulse">
-          <div className="h-6 bg-border-app w-2/3 mx-auto"></div>
-          <div className="h-4 bg-border-app w-1/2 mx-auto"></div>
-          <div className="border-b border-border-app my-2"></div>
-          <div className="h-10 bg-border-app w-full"></div>
-          <div className="h-10 bg-border-app w-full"></div>
-          <div className="h-10 bg-border-app w-full"></div>
+        <div className="w-full max-w-md card animate-pulse flex flex-col gap-6">
+          <div className="h-6 bg-border-app rounded-full w-2/3 mx-auto"></div>
+          <div className="h-4 bg-border-app rounded-full w-1/2 mx-auto"></div>
+          <div className="border-b border-border-app/30 my-2"></div>
+          <div className="h-12 bg-border-app rounded-2xl w-full"></div>
+          <div className="h-12 bg-border-app rounded-2xl w-full"></div>
+          <div className="h-12 bg-border-app rounded-2xl w-full"></div>
         </div>
       </div>
     )

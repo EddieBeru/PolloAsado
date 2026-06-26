@@ -15,7 +15,8 @@
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1",
-    "localforage": "^1.10.0"
+    "localforage": "^1.10.0",
+    "lucide-react": "^0.477.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -10,34 +10,45 @@
 }
 
 :root {
-  /* Default Theme: Slate Dark (Minimalist, dark gray with steel accent) */
-  --bg-app: #09090b;          /* Zinc 950 */
-  --surface-app: #18181b;     /* Zinc 900 */
-  --text-primary: #f4f4f5;    /* Zinc 100 */
-  --text-secondary: #a1a1aa;  /* Zinc 400 */
-  --border-app: #27272a;      /* Zinc 800 */
-  --accent-app: #94a3b8;      /* Slate 400 */
+  /* Default Theme: Soft Dark (Zinc based) */
+  --bg-app: #18181b;
+  /* Zinc 900 */
+  --surface-app: #27272a;
+  /* Zinc 800 */
+  --text-primary: #f4f4f5;
+  /* Zinc 100 */
+  --text-secondary: #a1a1aa;
+  /* Zinc 400 */
+  --border-app: #3f3f46;
+  /* Zinc 700 */
+  --accent-app: #94a3b8;
+  /* Slate 400 */
 }
 
 /* User Customizable Color Palettes (Flat Accents only) */
 [data-theme="slate"] {
-  --accent-app: #94a3b8;      /* Slate 400 */
+  --accent-app: #94a3b8;
+  /* Slate 400 */
 }
 
 [data-theme="emerald"] {
-  --accent-app: #34d399;      /* Emerald 400 */
+  --accent-app: #34d399;
+  /* Emerald 400 */
 }
 
 [data-theme="sky"] {
-  --accent-app: #38bdf8;      /* Sky 400 */
+  --accent-app: #38bdf8;
+  /* Sky 400 */
 }
 
 [data-theme="amber"] {
-  --accent-app: #fbbf24;      /* Amber 400 */
+  --accent-app: #fbbf24;
+  /* Amber 400 */
 }
 
 [data-theme="rose"] {
-  --accent-app: #f43f5e;      /* Rose 500 */
+  --accent-app: #f43f5e;
+  /* Rose 500 */
 }
 
 /* Base Styles */
@@ -50,7 +61,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styles to match the minimalist dark theme */
+/* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -67,4 +78,49 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-app);
+}
+
+/* --- Global Utility Classes --- */
+@layer components {
+  .card {
+    @apply bg-surface-app rounded-2xl shadow-md border border-border-app/30 p-5 md:p-6 lg:p-8 overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-accent-app text-bg-app font-bold rounded-2xl px-6 py-3 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-app text-text-primary border border-border-app rounded-2xl px-6 py-3 hover:border-accent-app active:scale-95 transition-all flex items-center justify-center gap-2;
+  }
+
+  .btn-icon {
+    @apply p-2.5 bg-surface-app/50 border border-border-app rounded-full text-text-secondary hover:text-accent-app hover:border-accent-app hover:bg-bg-app transition-all cursor-pointer;
+  }
+
+  .input {
+    @apply w-full bg-bg-app border border-border-app/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-app focus:ring-1 focus:ring-accent-app transition-all;
+  }
+
+  select {
+    @apply appearance-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+    padding-right: 2.25rem !important;
+  }
+
+  select:focus {
+    @apply !outline-none !ring-0;
+    border-color: var(--border-app) !important;
+  }
+
+  option {
+    @apply bg-bg-app text-text-primary;
+  }
+
+  .heading {
+    @apply text-xl md:text-2xl font-bold text-accent-app leading-tight;
+  }
 }

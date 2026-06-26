@@ -8,10 +8,10 @@ export default function Settings({ user, onLogout }) {
     ingreso: ['Salario', 'Negocio', 'Inversiones', 'Regalos', 'Otros'],
     gasto: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Hormiga']
   })
-  
+
   const [newCat, setNewCat] = useState('')
   const [catType, setCatType] = useState('gasto') // 'ingreso' o 'gasto'
-  
+
   const [newCurrency, setNewCurrency] = useState('')
 
   const handleForceSync = () => {
@@ -23,7 +23,7 @@ export default function Settings({ user, onLogout }) {
   }
 
   const handleClearLocalData = () => {
-    if(window.confirm('¿Estás seguro de que deseas borrar toda la caché local? Se volverá a descargar desde la nube en la próxima recarga.')) {
+    if (window.confirm('¿Estás seguro de que deseas borrar toda la caché local? Se volverá a descargar desde la nube en la próxima recarga.')) {
       alert('Caché local borrada. Recarga la aplicación.')
     }
   }
@@ -31,7 +31,7 @@ export default function Settings({ user, onLogout }) {
   const handleAddCategory = (e) => {
     e.preventDefault()
     if (!newCat.trim()) return
-    
+
     setCategories(prev => ({
       ...prev,
       [catType]: [...prev[catType], newCat.trim()]
@@ -68,67 +68,67 @@ export default function Settings({ user, onLogout }) {
 
   return (
     <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
-      
+
       {/* HEADER */}
-      <div className="flex flex-col gap-1 border-l-2 border-accent-app pl-4 border-b border-accent-app/20 pb-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-accent-app tracking-wide uppercase leading-none">Ajustes</h2>
-        <p className="text-xs md:text-sm text-text-secondary">
+      <div className="flex flex-col gap-2">
+        <h2 className="heading">Ajustes</h2>
+        <p className="text-sm text-text-secondary">
           Configuración de cuenta, almacenamiento local y sincronización.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
+
         {/* COLUMNA IZQUIERDA: Cuenta y Sincronización */}
         <div className="flex flex-col gap-8">
-          
+
           {/* PANEL DE CUENTA */}
-          <div className="bg-surface-app/30 border border-border-app p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider border-b border-border-app pb-2">Tu Cuenta</h3>
+          <div className="card flex flex-col gap-5">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Cuenta</h3>
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] text-text-secondary uppercase">Correo Electrónico</span>
+              <span className="text-sm font-semibold text-text-secondary">Correo Electrónico</span>
               <span className="text-sm font-mono text-text-primary">{user?.email || 'Usuario de Prueba'}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] text-text-secondary uppercase">Estado de la Suscripción</span>
+              <span className="text-sm font-semibold text-text-secondary">Suscripción</span>
               <span className="text-sm font-semibold text-emerald-400">Activa (Plan Gratuito)</span>
             </div>
             <button
               onClick={onLogout}
-              className="mt-2 w-full sm:w-auto bg-transparent border border-rose-500/50 text-rose-500 hover:bg-rose-500 hover:text-white text-xs font-bold uppercase tracking-wider py-2.5 transition-colors"
+              className="btn-secondary text-rose-400 hover:text-rose-300 hover:border-rose-400/50 mt-2"
             >
               Cerrar Sesión
             </button>
           </div>
 
           {/* PANEL DE SINCRONIZACIÓN (LOCAL FIRST) */}
-          <div className="bg-surface-app/30 border border-border-app p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider border-b border-border-app pb-2 flex items-center gap-2">
-              Sincronización PWA
-              <span className="bg-accent-app text-bg-app text-[9px] px-1.5 py-0.5 rounded-sm font-bold">BETA</span>
+          <div className="card flex flex-col gap-5">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30 flex items-center gap-2">
+              Sincronización
+              <span className="bg-accent-app text-bg-app text-[10px] px-2 py-0.5 rounded-full font-bold">BETA</span>
             </h3>
-            
-            <p className="text-xs text-text-secondary leading-relaxed">
+
+            <p className="text-sm text-text-secondary leading-relaxed">
               PolloAsado opera bajo una arquitectura <strong>Local-First</strong>. Tus transacciones se guardan instantáneamente en tu dispositivo y se sincronizan con la nube en segundo plano para máxima velocidad.
             </p>
 
-            <div className="flex items-center gap-3 bg-bg-app border border-border-app p-3">
+            <div className="flex items-center gap-3 bg-surface-app/50 rounded-xl border border-border-app/30 p-4">
               <div className={`w-2 h-2 rounded-full ${syncStatus.includes('Sincronizando') ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
-              <span className="text-xs font-mono text-text-primary">{syncStatus}</span>
+              <span className="text-sm font-mono text-text-primary">{syncStatus}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-2">
               <button
                 onClick={handleForceSync}
-                className="flex-1 bg-surface-app border border-border-app hover:border-accent-app text-text-primary text-xs font-bold uppercase tracking-wider py-2.5 transition-colors"
+                className="btn-secondary flex-1"
               >
                 Forzar Sync
               </button>
               <button
                 onClick={handleClearLocalData}
-                className="flex-1 bg-surface-app border border-border-app hover:border-rose-500/50 text-text-secondary hover:text-rose-400 text-xs font-bold uppercase tracking-wider py-2.5 transition-colors"
+                className="btn-secondary flex-1 text-rose-400 hover:text-rose-300 hover:border-rose-400/50"
               >
-                Borrar Caché Local
+                Borrar Caché
               </button>
             </div>
           </div>
@@ -136,51 +136,51 @@ export default function Settings({ user, onLogout }) {
 
         {/* COLUMNA DERECHA: Preferencias y Categorías */}
         <div className="flex flex-col gap-8">
-          
+
           {/* PANEL DE GESTIÓN DE CATEGORÍAS */}
-          <div className="bg-surface-app/30 border border-border-app p-6 flex flex-col gap-5 h-full">
-            <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider border-b border-border-app pb-2">Gestión de Categorías</h3>
-            <p className="text-xs text-text-secondary">Personaliza las categorías disponibles al registrar ingresos y gastos. Estos cambios se guardarán en las preferencias de tu perfil.</p>
-            
+          <div className="card flex flex-col gap-5">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Categorías</h3>
+            <p className="text-sm text-text-secondary">Personaliza las categorías disponibles al registrar ingresos y gastos.</p>
+
             <form onSubmit={handleAddCategory} className="flex gap-2">
-              <select 
-                value={catType} 
+              <select
+                value={catType}
                 onChange={(e) => setCatType(e.target.value)}
-                className="bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app"
+                className="input w-auto cursor-pointer"
               >
                 <option value="ingreso">Ingreso</option>
                 <option value="gasto">Gasto</option>
               </select>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={newCat}
                 onChange={(e) => setNewCat(e.target.value)}
                 placeholder="Nueva categoría..."
-                className="flex-1 bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app"
+                className="input flex-1"
               />
-              <button type="submit" className="bg-accent-app text-bg-app font-bold px-4 text-xs hover:opacity-90 transition-opacity">+</button>
+              <button type="submit" className="btn-primary px-4 aspect-square">+</button>
             </form>
 
-            <div className="flex flex-col gap-4 mt-2">
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase">Tus Categorías de Ingreso</span>
+            <div className="flex flex-col gap-6 mt-2">
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-semibold text-text-secondary">Ingresos</span>
                 <div className="flex flex-wrap gap-2">
                   {categories.ingreso.map(cat => (
-                    <span key={`ing-${cat}`} className="bg-bg-app border border-border-app text-xs px-2.5 py-1 flex items-center gap-2">
+                    <span key={`ing-${cat}`} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('ingreso', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1">×</button>
+                      <button onClick={() => handleRemoveCategory('ingreso', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 mt-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase">Tus Categorías de Gasto</span>
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-semibold text-text-secondary">Gastos</span>
                 <div className="flex flex-wrap gap-2">
                   {categories.gasto.map(cat => (
-                    <span key={`gas-${cat}`} className="bg-bg-app border border-border-app text-xs px-2.5 py-1 flex items-center gap-2">
+                    <span key={`gas-${cat}`} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('gasto', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1">×</button>
+                      <button onClick={() => handleRemoveCategory('gasto', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
@@ -189,42 +189,42 @@ export default function Settings({ user, onLogout }) {
           </div>
 
           {/* PANEL DE GESTIÓN DE DIVISAS */}
-          <div className="bg-surface-app/30 border border-border-app p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider border-b border-border-app pb-2">Divisas</h3>
-            
+          <div className="card flex flex-col gap-5">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Divisas</h3>
+
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase">Divisa Principal (Base)</label>
-              <select 
-                value={settings.divisa_principal} 
+              <label className="text-sm font-semibold text-text-secondary">Divisa Principal (Base)</label>
+              <select
+                value={settings.divisa_principal}
                 onChange={(e) => updateSettings({ divisa_principal: e.target.value })}
-                className="bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app w-full uppercase"
+                className="input cursor-pointer"
               >
                 {settings.divisas_activas.map(cur => (
                   <option key={cur} value={cur}>{cur}</option>
                 ))}
               </select>
-              <p className="text-[9px] text-text-secondary">Todos tus reportes se calcularán y mostrarán en esta moneda.</p>
+              <p className="text-xs text-text-secondary">Todos tus reportes se mostrarán en esta moneda.</p>
             </div>
 
-            <div className="flex flex-col gap-2 mt-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase">Monedas Disponibles</label>
+            <div className="flex flex-col gap-2 mt-4">
+              <label className="text-sm font-semibold text-text-secondary">Monedas Disponibles</label>
               <form onSubmit={handleAddCurrency} className="flex gap-2 mb-2">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newCurrency}
                   onChange={(e) => setNewCurrency(e.target.value.toUpperCase())}
                   placeholder="Ej. EUR, MXN, COP..."
                   maxLength="3"
-                  className="flex-1 bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app uppercase"
+                  className="input flex-1 uppercase"
                 />
-                <button type="submit" className="bg-accent-app text-bg-app font-bold px-4 text-xs hover:opacity-90 transition-opacity">+</button>
+                <button type="submit" className="btn-primary px-4 aspect-square">+</button>
               </form>
               <div className="flex flex-wrap gap-2">
                 {settings.divisas_activas.map(cur => (
-                  <span key={cur} className="bg-bg-app border border-border-app text-xs px-2.5 py-1 flex items-center gap-2 font-mono">
+                  <span key={cur} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 font-mono">
                     {cur}
                     {cur !== settings.divisa_principal && (
-                      <button onClick={() => handleRemoveCurrency(cur)} className="text-text-secondary hover:text-rose-400 font-bold px-1">×</button>
+                      <button onClick={() => handleRemoveCurrency(cur)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
                     )}
                   </span>
                 ))}

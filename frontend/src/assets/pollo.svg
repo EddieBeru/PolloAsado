@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:ns1="http://sozi.baierouge.fr"
+    id="svg6808"
+    sodipodi:docname="chicken.svg"
+    viewBox="0 0 249.36 370.55"
+    sodipodi:version="0.32"
+    version="1.0"
+    inkscape:output_extension="org.inkscape.output.svg.inkscape"
+    inkscape:version="0.46"
+  >
+  <sodipodi:namedview
+      id="base"
+      bordercolor="#666666"
+      inkscape:pageshadow="2"
+      inkscape:window-y="23"
+      pagecolor="#ffffff"
+      inkscape:window-height="690"
+      inkscape:zoom="0.98994949"
+      inkscape:window-x="0"
+      showgrid="false"
+      borderopacity="1.0"
+      inkscape:current-layer="g6500"
+      inkscape:cx="299.4889"
+      inkscape:cy="158.2118"
+      inkscape:window-width="1022"
+      inkscape:pageopacity="0.0"
+      inkscape:document-units="px"
+  />
+  <g
+      id="layer1"
+      inkscape:label="Capa 1"
+      inkscape:groupmode="layer"
+      transform="translate(-248.53 -346.19)"
+    >
+    <g
+        id="g6500"
+        transform="matrix(2.8125 .38751 -.38751 2.8125 1843.9 1154.4)"
+      >
+      <g
+          id="g8718"
+          transform="matrix(.99657 -.082723 .082723 .99657 41.739 -28.951)"
+        >
+        <g
+            id="g6503"
+            transform="matrix(.79927 -.028086 .028086 .79927 96.676 78.538)"
+          >
+          <g
+              id="g6505"
+              transform="matrix(.99608 -.00068016 -.00068016 1.0154 -5.2803 3.1055)"
+            >
+            <path
+                id="path6507"
+                style="fill:#a40000"
+                d="m-814.49-413.61c-7.59 1.08-15.15 14.69-16.9 30.39-0.13 1.14-0.22 2.26-0.28 3.36-5.27-5.45-11.47-8.32-15.13-6.61-4.48 2.1-3.45 10.28 2.28 18.26 5.74 7.98 14.01 12.78 18.5 10.68 0.2-0.09 0.38-0.24 0.55-0.35 1.38 0.96 2.93 1.39 4.63 1.15 7.59-1.08 15.18-14.7 16.93-30.39s-3-27.57-10.58-26.49z"
+            />
+            <path
+                id="path6509"
+                style="fill:#cc0000"
+                d="m-814.36-404.76c-6.4 0.46-13.62 11.54-16.13 24.74-0.18 0.96-0.33 1.91-0.45 2.83-4.03-4.93-9.02-7.73-12.19-6.5-3.88 1.5-3.56 8.5 0.69 15.61s10.84 11.67 14.72 10.16c0.17-0.06 0.33-0.17 0.49-0.26 1.08 0.9 2.35 1.35 3.78 1.25 6.4-0.46 13.65-11.55 16.16-24.75 2.5-13.2-0.67-23.54-7.07-23.08z"
+            />
+          </g
+          >
+        </g
+        >
+        <path
+            id="path6511"
+            sodipodi:nodetypes="cscscscsccsc"
+            style="fill:#a40000"
+            d="m-573.36-193.86c-12.97 0.74-23.41 11.25-22.69 23.78 0.14 2.49 1.2 5.12 2.1 7.32-12.51 2.89-21.72 14.11-21.48 27.3 0.23 12.72 9.18 23.25 21.12 26.12 6.96 5.93 16.25 9.32 26.26 8.75 9.03-0.52 17.14-4.16 23.22-9.78 10.29-3.94 17.51-13.94 17.3-25.46-0.19-10.3-6.25-19.12-14.99-23.38-2.04-2.24-4.35-4.25-6.91-5.93 0.68-2.34 0.98-4.81 0.84-7.37-0.72-12.52-11.81-22.08-24.77-21.35z"
+        />
+        <g
+            id="g6513"
+            transform="matrix(.81254 .0017530 -.0017530 .81254 99.103 111.35)"
+          >
+          <path
+              id="path6515"
+              sodipodi:rx="42"
+              sodipodi:ry="42"
+              style="fill:#f3b700"
+              sodipodi:type="arc"
+              d="m-1153-294a42 42 0 1 1 -84 0 42 42 0 1 1 84 0z"
+              transform="matrix(.74746 0 0 .76430 49.982 -77.65)"
+              sodipodi:cy="-294"
+              sodipodi:cx="-1195"
+          />
+          <path
+              id="path6517"
+              sodipodi:rx="42"
+              sodipodi:ry="42"
+              style="fill:#f3b700"
+              sodipodi:type="arc"
+              d="m-1153-294a42 42 0 1 1 -84 0 42 42 0 1 1 84 0z"
+              transform="matrix(.72642 0 0 .74278 62.275 -82.284)"
+              sodipodi:cy="-294"
+              sodipodi:cx="-1195"
+          />
+        </g
+        >
+        <path
+            id="path6519"
+            sodipodi:rx="42"
+            sodipodi:ry="42"
+            style="fill:#f3b700"
+            sodipodi:type="arc"
+            d="m-1153-294a42 42 0 1 1 -84 0 42 42 0 1 1 84 0z"
+            transform="matrix(.52391 -.018410 .018055 .51382 59.598 -41.354)"
+            sodipodi:cy="-294"
+            sodipodi:cx="-1195"
+        />
+        <path
+            id="path6521"
+            sodipodi:rx="42"
+            sodipodi:ry="42"
+            style="fill:#ffdf50"
+            sodipodi:type="arc"
+            d="m-1153-294a42 42 0 1 1 -84 0 42 42 0 1 1 84 0z"
+            transform="matrix(.79927 -.028086 .027613 .78582 393.9 62.742)"
+            sodipodi:cy="-294"
+            sodipodi:cx="-1195"
+        />
+        <path
+            id="path6523"
+            sodipodi:rx="42"
+            sodipodi:ry="42"
+            style="fill:#ffdf50"
+            sodipodi:type="arc"
+            d="m-1153-294a42 42 0 1 1 -84 0 42 42 0 1 1 84 0z"
+            transform="matrix(.49027 -.017228 .018055 .51382 19.639 -38.35)"
+            sodipodi:cy="-294"
+            sodipodi:cx="-1195"
+        />
+        <g
+            id="g6525"
+            transform="matrix(1.0433 -.50817 .42342 .87620 436.72 -293.3)"
+          >
+          <g
+              id="g6527"
+            >
+            <path
+                id="path6529"
+                style="fill:#ffffff"
+                d="m-573.28-181.16c-2.65-0.01-5.32 0.87-7.53 2.72-5.05 4.24-5.79 11.9-1.66 17.1 4.14 5.19 11.61 5.95 16.66 1.72 0.82-0.69 1.5-1.47 2.09-2.32 1.2 0.29 2.45 0.31 3.72-0.06 4.41-1.27 7.05-6.34 5.91-11.31-1.15-4.98-5.63-7.99-10.03-6.72-0.85 0.24-1.65 0.63-2.35 1.12-2.01-1.47-4.41-2.23-6.81-2.25z"
+                transform="matrix(.77586 .44997 -.37493 .92384 -448.8 74.453)"
+            />
+          </g
+          >
+        </g
+        >
+        <g
+            id="g6531"
+            transform="matrix(1.086 .24685 -.24685 1.086 26.338 160.03)"
+          >
+          <path
+              id="path6533"
+              style="fill:#a40000"
+              d="m-576.27-160.1c-0.27 0.02-0.56 0.06-0.84 0.1-0.47 0.5-1.09 0.86-1.75 1.25-0.01 0-0.03-0.01-0.04 0-0.28-0.03-0.58-0.06-0.87-0.05-5.05 0.86-10.98 8.53-13.24 17.09-2.26 8.55 0.01 14.79 5.05 13.93 2.18-0.37 4.51-2 6.64-4.42 0.01 0.01 0.03 0.02 0.03 0.03 3.89 9.38 10.52 13.18 14.82 8.51 1.9-2.07 3.02-5.46 3.35-9.39 3.79 1.82 7.47 1.84 9.41-0.28 2.8-3.06 0.89-9.47-4.26-14.31-3.17-2.97-6.84-4.63-9.84-4.77-1.28-3.17-2.11-7-6.32-7.64-0.63-0.1-1.34-0.12-2.14-0.05z"
+          />
+          <path
+              id="path6535"
+              style="fill:#cc0000"
+              d="m-575.11-157.75c-0.9 0.04-1.89 0.24-2.94 0.68-0.38-0.12-0.77-0.24-1.21-0.31-4.34 0.34-9.76 6.76-12.06 14.32-2.3 7.57-0.61 13.43 3.74 13.08 2.25-0.18 4.76-1.99 7-4.74 0.01 0.03 0.02 0.08 0.03 0.12 3.25 8.47 9.15 12.44 13.14 8.83 1.85-1.67 2.94-4.69 3.29-8.28 3.14 1.26 6.11 1.16 7.73-0.57 2.53-2.71 0.81-8.37-3.85-12.64-2.21-2.03-4.69-3.37-6.95-3.93-1.17-2.78-3.39-6.22-7.08-6.53-0.28-0.03-0.55-0.04-0.84-0.03z"
+          />
+        </g
+        >
+        <g
+            id="g6537"
+            transform="matrix(.99704 -.076941 .076941 .99704 11.971 -43.88)"
+          >
+          <g
+              id="g6539"
+              transform="matrix(.44508 -.0071440 .0071440 .44508 -163.75 -39.662)"
+            >
+            <g
+                id="g6541"
+                transform="matrix(.98495 -.17285 .17285 .98495 38.749 -162.55)"
+              >
+              <rect
+                  id="rect6543"
+                  style="stroke:#a40000;stroke-width:.55255;fill:#a40000"
+                  transform="matrix(.73663 .67630 -.69790 .71620 0 0)"
+                  height="30.697"
+                  width="9.5636"
+                  y="379.16"
+                  x="-871.72"
+              />
+              <rect
+                  id="rect6545"
+                  style="stroke:#a40000;stroke-width:.55255;fill:#a40000"
+                  transform="matrix(.67630 -.73663 .71620 .69790 0 0)"
+                  height="30.697"
+                  width="9.5636"
+                  y="-894.4"
+                  x="-425.25"
+              />
+            </g
+            >
+          </g
+          >
+          <g
+              id="g6547"
+              transform="matrix(.28576 0 0 .28576 -299.95 -83.771)"
+            >
+            <g
+                id="g6549"
+                transform="matrix(.98495 -.17285 .17285 .98495 38.749 -162.55)"
+              >
+              <g
+                  id="g6551"
+                  transform="matrix(.94480 -.0096870 -.0096870 .9983 -54.26 -9.5224)"
+                >
+                <rect
+                    id="rect6553"
+                    style="stroke:#a40000;stroke-width:.55255;fill:#a40000"
+                    transform="matrix(.73663 .67630 -.69790 .71620 0 0)"
+                    height="30.697"
+                    width="9.5636"
+                    y="379.16"
+                    x="-871.72"
+                />
+                <rect
+                    id="rect6555"
+                    style="stroke:#a40000;stroke-width:.55255;fill:#a40000"
+                    transform="matrix(.67630 -.73663 .71620 .69790 0 0)"
+                    height="30.697"
+                    width="9.5636"
+                    y="-894.4"
+                    x="-425.25"
+                />
+              </g
+              >
+            </g
+            >
+          </g
+          >
+        </g
+        >
+        <g
+            id="g6557"
+            transform="matrix(-1.0131 -.75650 .65670 -.93191 -1192.5 -1067.3)"
+          >
+          <path
+              id="path6559"
+              sodipodi:nodetypes="csss"
+              style="fill-rule:evenodd;fill:#a40000"
+              d="m-840.93-319.38c3.93-8.1 26.18-12.51 31.48-4.28 5.29 8.23-8.28 28.6-17.44 28.5-9.15-0.09-17.97-16.11-14.04-24.22z"
+          />
+          <path
+              id="path6561"
+              sodipodi:nodetypes="csss"
+              style="fill-rule:evenodd;fill:#cc0000"
+              d="m-839.56-318.59c3.59-7.35 23.92-11.33 28.77-3.86s-7.54 25.93-15.91 25.83c-8.37-0.09-16.44-14.63-12.86-21.97z"
+          />
+        </g
+        >
+        <g
+            id="g6563"
+            transform="matrix(.40777 -.032470 .035089 .44066 -359.12 -62.001)"
+          >
+          <path
+              id="path6565"
+              sodipodi:rx="10.783379"
+              sodipodi:ry="7.9549513"
+              style="fill:#f3b700"
+              sodipodi:type="arc"
+              d="m-487.55-139.81a10.783 7.955 0 1 1 -21.57 0 10.783 7.955 0 1 1 21.57 0z"
+              sodipodi:cy="-139.81047"
+              sodipodi:cx="-498.3335"
+          />
+          <path
+              id="path6567"
+              sodipodi:rx="11.313708"
+              sodipodi:ry="6.5407376"
+              style="fill:#ffdf50"
+              sodipodi:type="arc"
+              d="m-498.16-113.29a11.314 6.5407 0 1 1 -22.62 0 11.314 6.5407 0 1 1 22.62 0z"
+              transform="matrix(.77234 0 0 .84072 -109.09 -43.985)"
+              sodipodi:cy="-113.29397"
+              sodipodi:cx="-509.47043"
+          />
+        </g
+        >
+        <g
+            id="g6569"
+            transform="translate(-124.1 -12.142)"
+          >
+          <path
+              id="path6571"
+              sodipodi:nodetypes="cs"
+              style="stroke:#a40000;stroke-linecap:round;stroke-width:1.131;fill:none"
+              d="m-463.15-165.93s7.49-16.52 18.46-2.9"
+          />
+          <path
+              id="path6573"
+              sodipodi:nodetypes="cs"
+              style="stroke:#a40000;stroke-linecap:round;stroke-width:.92589;fill:none"
+              d="m-431.25-169.61s-4.08-8.67-10.07-1.53"
+          />
+        </g
+        >
+      </g
+      >
+    </g
+    >
+  </g
+  >
+  <metadata
+    >
+    <rdf:RDF
+      >
+      <cc:Work
+        >
+        <dc:format
+          >image/svg+xml</dc:format
+        >
+        <dc:type
+            rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+        />
+        <cc:license
+            rdf:resource="http://creativecommons.org/licenses/publicdomain/"
+        />
+        <dc:publisher
+          >
+          <cc:Agent
+              rdf:about="http://openclipart.org/"
+            >
+            <dc:title
+              >Openclipart</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:publisher
+        >
+        <dc:title
+          >pollo</dc:title
+        >
+        <dc:date
+          >2009-02-04T08:26:58</dc:date
+        >
+        <dc:description
+        />
+        <dc:source
+          >https://openclipart.org/detail/21351/pollo-by-estrellitapimpery-21351</dc:source
+        >
+        <dc:creator
+          >
+          <cc:Agent
+            >
+            <dc:title
+              >estrellitapimpery</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:creator
+        >
+        <dc:subject
+          >
+          <rdf:Bag
+            >
+            <rdf:li
+              >animal</rdf:li
+            >
+            <rdf:li
+              >bird</rdf:li
+            >
+            <rdf:li
+              >cartoon</rdf:li
+            >
+            <rdf:li
+              >chicken</rdf:li
+            >
+          </rdf:Bag
+          >
+        </dc:subject
+        >
+      </cc:Work
+      >
+      <cc:License
+          rdf:about="http://creativecommons.org/licenses/publicdomain/"
+        >
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Reproduction"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Distribution"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#DerivativeWorks"
+        />
+      </cc:License
+      >
+    </rdf:RDF
+    >
+  </metadata
+  >
+</svg
+>

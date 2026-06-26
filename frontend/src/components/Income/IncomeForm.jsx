@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useIncomes } from '../../hooks/useIncomes'
 import { useSettings } from '../../hooks/useSettings'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 
 export default function IncomeForm({ user, setView, initialData, onCancel }) {
   const { settings, getCachedRate, setCachedRate } = useSettings()
@@ -209,50 +210,54 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
   return (
     <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-accent-app/20 pb-4">
-        <div className="flex flex-col gap-1 border-l-2 border-accent-app pl-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-accent-app tracking-wide uppercase leading-none">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="heading">
             {isEditing ? 'Editar Ingreso' : 'Registrar Ingreso'}
           </h2>
-          <p className="text-xs md:text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary">
             {isEditing ? 'Modifica los detalles de esta entrada.' : 'Añade una nueva entrada financiera al sistema.'}
           </p>
         </div>
         <button
           type="button"
           onClick={onCancel || (() => setView('list'))}
-          className="text-xs font-bold text-text-secondary hover:text-text-primary px-6 py-2 border border-border-app hover:border-accent-app transition-colors uppercase tracking-wider"
+          className="btn-secondary"
         >
-          ← Volver a la Lista
+          <ArrowLeft size={18} /> Volver
         </button>
       </div>
 
-      <div className="w-full max-w-4xl mx-auto bg-surface-app/5 border border-border-app p-6 md:p-8">
-
-        {isEditing && hasGroup && (
-          <div className="mb-6 bg-surface-app/20 border border-accent-app/50 p-4 flex flex-col gap-3">
-            <span className="text-xs font-bold text-accent-app uppercase tracking-wider">Opciones de Edición de Serie</span>
-            <p className="text-[10px] text-text-secondary">Este ingreso pertenece a una serie recurrente. ¿Qué deseas editar?</p>
-            <div className="flex gap-4 mt-2">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-text-primary font-bold">
-                <input type="radio" name="updateMode" value="single" checked={updateMode === 'single'} onChange={() => setUpdateMode('single')} className="accent-accent-app w-4 h-4" />
-                Solo esta instancia
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-text-primary font-bold">
-                <input type="radio" name="updateMode" value="series" checked={updateMode === 'series'} onChange={() => setUpdateMode('series')} className="accent-accent-app w-4 h-4" />
-                Toda la serie (Futura e Histórica)
-              </label>
-            </div>
-            {updateMode === 'series' && (
-              <p className="text-[9px] text-amber-400 italic">Nota: Al editar toda la serie, se actualizará el concepto, monto y categoría para todas las instancias asociadas. Las fechas y la frecuencia no serán modificadas.</p>
-            )}
+      {isEditing && hasGroup && (
+        <div className="card bg-amber-400/5 border-amber-400/30 flex flex-col gap-3">
+          <span className="text-sm font-bold text-amber-400">Edición de Serie Recurrente</span>
+          <p className="text-sm text-text-secondary">Este ingreso pertenece a una serie recurrente. ¿Qué deseas editar?</p>
+          <div className="flex flex-col sm:flex-row gap-4 mt-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-text-primary font-semibold">
+              <input type="radio" name="updateMode" value="single" checked={updateMode === 'single'} onChange={() => setUpdateMode('single')} className="accent-accent-app w-4 h-4" />
+              Solo esta instancia
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-text-primary font-semibold">
+              <input type="radio" name="updateMode" value="series" checked={updateMode === 'series'} onChange={() => setUpdateMode('series')} className="accent-accent-app w-4 h-4" />
+              Toda la serie (Futura e Histórica)
+            </label>
           </div>
-        )}
+          {updateMode === 'series' && (
+            <p className="text-xs text-amber-400 italic">Nota: Al editar toda la serie, se actualizará el concepto, monto y categoría para todas las instancias asociadas. Las fechas y la frecuencia no serán modificadas.</p>
+          )}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label htmlFor="concept" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Concepto *</label>
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto flex flex-col gap-6">
+
+        <div className="flex flex-col gap-6 items-stretch">
+
+          {/* Card 1: Información Básica */}
+          <div className="card flex flex-col gap-6 w-full transition-all duration-500">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Detalles Principales</h3>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="concept" className="text-sm font-semibold text-text-secondary ml-1">Concepto *</label>
               <input
                 type="text"
                 id="concept"
@@ -261,12 +266,12 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 onChange={handleChange}
                 placeholder="Ej. Salario quincenal, Venta de equipo..."
                 required
-                className="w-full bg-surface-app/50 border border-border-app p-3 text-sm text-text-primary focus:outline-none focus:border-accent-app transition-colors"
+                className="input"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="amount" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Monto {formData.divisa_original !== baseCurrency ? '(Moneda Original)' : ''}</label>
+              <label htmlFor="amount" className="text-sm font-semibold text-text-secondary ml-1">Monto {formData.divisa_original !== baseCurrency ? '(Moneda Original)' : ''} *</label>
               <div className="relative flex">
                 <input
                   type="number"
@@ -279,13 +284,13 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                   min="0"
                   required
                   disabled={useDesglose}
-                  className={`w-full bg-surface-app/50 border border-border-app p-3 pl-4 pr-20 text-sm font-mono font-bold text-text-primary focus:outline-none focus:border-accent-app transition-colors ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`input w-full pr-24 font-mono font-bold ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 <select
                   name="divisa_original"
                   value={formData.divisa_original}
                   onChange={handleChange}
-                  className="absolute right-0 top-0 bottom-0 bg-transparent border-l border-border-app text-xs font-bold text-text-secondary px-2 focus:outline-none focus:text-accent-app cursor-pointer uppercase"
+                  className="absolute right-0 top-0 bottom-0 bg-transparent border-l border-border-app text-sm font-bold text-text-secondary w-24 text-center focus:outline-none focus:text-accent-app cursor-pointer uppercase rounded-r-2xl"
                 >
                   {settings?.divisas_activas?.map(cur => (
                     <option key={cur} value={cur}>{cur}</option>
@@ -294,7 +299,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
               </div>
 
               {formData.divisa_original !== baseCurrency && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] font-mono mt-1 gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono mt-1 px-1 gap-1">
                   <div className="flex items-center gap-2">
                     <span className={rateError ? 'text-amber-400' : 'text-text-secondary'}>
                       {isFetchingRate
@@ -323,7 +328,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="date" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Fecha *</label>
+              <label htmlFor="date" className="text-sm font-semibold text-text-secondary ml-1">Fecha *</label>
               <input
                 type="date"
                 id="date"
@@ -331,107 +336,26 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 value={formData.date}
                 onChange={handleChange}
                 required
-                className="w-full bg-surface-app/50 border border-border-app p-3 text-sm font-mono text-text-primary focus:outline-none focus:border-accent-app transition-colors [color-scheme:dark]"
+                className="input font-mono [color-scheme:dark]"
               />
             </div>
           </div>
 
-          <div className="flex justify-start">
-            <button
-              type="button"
-              onClick={() => setIsExtended(!isExtended)}
-              className="text-xs font-semibold text-accent-app hover:text-text-primary transition-colors cursor-pointer flex items-center gap-2 select-none uppercase tracking-wider"
-            >
-              <span className={`transform transition-transform duration-300 ${isExtended ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-              {isExtended ? 'Ocultar opciones avanzadas' : 'Mostrar opciones avanzadas'}
-            </button>
-          </div>
+          {/* Opciones Avanzadas */}
+          {isExtended && (
+            <>
+              {/* Card 2: Clasificación */}
+              <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+                <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Clasificación</h3>
 
-          <div className={`flex flex-col gap-8 transition-all duration-500 overflow-hidden ${isExtended ? 'opacity-100 h-auto' : 'opacity-0 h-0'}`}>
-
-            <div className="flex flex-col gap-4 border border-dashed border-accent-app/40 p-5 bg-surface-app/10 rounded-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-text-primary uppercase tracking-wider">Desglose de Monto (Cuentas Divididas)</span>
-                  <span className="text-[10px] text-text-secondary mt-1">Especifica sub-transacciones. El monto total se calculará automáticamente.</span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={useDesglose} onChange={() => setUseDesglose(!useDesglose)} />
-                  <div className="w-9 h-5 bg-surface-app/80 peer-focus:outline-none border border-border-app rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-app"></div>
-                </label>
-              </div>
-
-              {useDesglose && (
-                <div className="flex flex-col gap-4 mt-2 animate-in fade-in duration-300">
-                  {formData.desglose.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      {formData.desglose.map(item => (
-                        <div key={item.id} className="flex items-center justify-between bg-surface-app/40 p-2.5 border border-border-app text-sm">
-                          <span className="text-text-primary text-xs truncate max-w-[50%]">{item.descripcion}</span>
-                          <div className="flex items-center gap-3">
-                            <span className={`font-mono text-xs font-bold ${item.operacion === 'suma' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {item.operacion === 'suma' ? '+' : '-'}${parseFloat(item.monto).toFixed(2)}
-                            </span>
-                            <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-rose-400 font-bold px-1 cursor-pointer">×</button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                    <input
-                      type="text"
-                      name="descripcion"
-                      placeholder="Descripción (Ej. Transferencia Juan)"
-                      value={newDesgloseItem.descripcion}
-                      onChange={handleDesgloseChange}
-                      className="w-full sm:flex-1 bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app"
-                    />
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <select
-                        name="operacion"
-                        value={newDesgloseItem.operacion}
-                        onChange={handleDesgloseChange}
-                        className="bg-bg-app border border-border-app p-2 text-xs text-text-primary focus:outline-none focus:border-accent-app appearance-none text-center cursor-pointer"
-                      >
-                        <option value="suma">+</option>
-                        <option value="resta">-</option>
-                      </select>
-                      <input
-                        type="number"
-                        name="monto"
-                        placeholder="0.00"
-                        step="0.01"
-                        value={newDesgloseItem.monto}
-                        onChange={handleDesgloseChange}
-                        className="w-24 bg-bg-app border border-border-app p-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-app"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddDesglose}
-                        className="bg-surface-app border border-border-app hover:border-accent-app text-text-primary px-3 py-2 text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        Añadir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="category" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Categoría</label>
-                <div className="relative">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="category" className="text-sm font-semibold text-text-secondary ml-1">Categoría</label>
                   <select
                     id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full bg-surface-app/50 border border-border-app p-3 text-sm text-text-primary focus:outline-none focus:border-accent-app transition-colors appearance-none cursor-pointer"
+                    className="input cursor-pointer"
                   >
                     <option value="">Seleccionar categoría...</option>
                     <option value="salary">Salario</option>
@@ -441,163 +365,258 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     <option value="gifts">Regalos</option>
                     <option value="other">Otros</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary">▼</div>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="account" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Cuenta Destino</label>
-                <div className="relative">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta Destino</label>
                   <select
                     id="account"
                     name="account"
                     value={formData.account}
                     onChange={handleChange}
-                    className="w-full bg-surface-app/50 border border-border-app p-3 text-sm text-text-primary focus:outline-none focus:border-accent-app transition-colors appearance-none cursor-pointer"
+                    className="input cursor-pointer"
                   >
                     <option value="">Seleccionar cuenta...</option>
                     <option value="cash">Efectivo</option>
                     <option value="bank_main">Cuenta Principal</option>
                     <option value="savings">Ahorros</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary">▼</div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="notes" className="text-sm font-semibold text-text-secondary ml-1">Notas Adicionales</label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    placeholder="Detalles sobre este ingreso..."
+                    rows="3"
+                    className="input resize-y"
+                  ></textarea>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="notes" className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Notas Adicionales</label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                placeholder="Detalles sobre este ingreso..."
-                rows="2"
-                className="w-full bg-surface-app/50 border border-border-app p-3 text-sm text-text-primary focus:outline-none focus:border-accent-app transition-colors resize-y"
-              ></textarea>
-            </div>
+              {/* Card 3: Desglose */}
+              <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center justify-between pb-2 border-b border-border-app/30">
+                  <div className="flex flex-col">
+                    <h3 className="text-lg font-bold text-text-primary">Desglose (Cuentas Divididas)</h3>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={useDesglose} onChange={() => setUseDesglose(!useDesglose)} />
+                    <div className="w-11 h-6 bg-surface-app/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-app"></div>
+                  </label>
+                </div>
 
-            {(!isEditing || (isEditing && hasGroup && updateMode === 'series')) && (
-              <div className="flex flex-col gap-4 border-t border-border-app pt-6 mt-2">
-                {isEditing ? (
-                  <p className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/20 p-3">
-                    Nota: Al editar una serie existente, los parámetros de fechas y frecuencia están bloqueados por seguridad. Para cambiar la frecuencia, elimina la serie desde la base de datos y crea una nueva.
-                  </p>
-                ) : (
-                  <>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <div className="relative inline-flex items-center">
-                        <input type="checkbox" name="es_recurrente" className="sr-only peer" checked={formData.es_recurrente} onChange={handleChange} />
-                        <div className="w-9 h-5 bg-surface-app/80 peer-focus:outline-none border border-border-app rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-app"></div>
-                      </div>
-                      <span className="text-sm font-bold text-text-primary uppercase tracking-wider">Es un ingreso recurrente</span>
-                    </label>
+                {useDesglose ? (
+                  <div className="flex flex-col gap-4 mt-2 animate-in fade-in duration-300">
+                    <p className="text-xs text-text-secondary">El monto principal se calculará en base a la suma o resta de estas sub-transacciones.</p>
 
-                    {formData.es_recurrente && (
-                      <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Frecuencia</label>
-                            <select name="frecuencia" value={formData.frecuencia} onChange={handleChange} className="w-full bg-surface-app/50 border border-border-app p-3 text-sm text-text-primary focus:outline-none focus:border-accent-app">
-                              <option value="semanal">Semanal</option>
-                              <option value="quincenal">Quincenal</option>
-                              <option value="mensual">Mensual</option>
-                            </select>
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Duración Límite (Opcional)</label>
-                            <div className="relative">
-                              <input
-                                type="number"
-                                id="limite_recurrencia"
-                                name="limite_recurrencia"
-                                value={formData.limite_recurrencia}
-                                onChange={handleChange}
-                                placeholder="Ej. 12"
-                                min="1"
-                                className="w-full bg-surface-app/50 border border-border-app p-3 pr-16 text-sm font-mono text-text-primary focus:outline-none focus:border-accent-app transition-colors"
-                              />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-text-secondary uppercase tracking-widest pointer-events-none">
-                                {formData.frecuencia === 'semanal' ? 'Semanas' : formData.frecuencia === 'quincenal' ? 'Quincenas' : 'Meses'}
+                    {formData.desglose.length > 0 && (
+                      <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                        {formData.desglose.map(item => (
+                          <div key={item.id} className="flex items-center justify-between bg-bg-app rounded-xl px-4 py-3 border border-border-app/30">
+                            <span className="text-text-primary text-sm truncate max-w-[50%]">{item.descripcion}</span>
+                            <div className="flex items-center gap-4">
+                              <span className={`font-mono text-sm font-bold ${item.operacion === 'suma' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {item.operacion === 'suma' ? '+' : '-'}${parseFloat(item.monto).toFixed(2)}
                               </span>
+                              <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full cursor-pointer">×</button>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2 pt-2 border-t border-border-app/20">
+                      <input
+                        type="text"
+                        name="descripcion"
+                        placeholder="Descripción (Ej. Transferencia Juan)"
+                        value={newDesgloseItem.descripcion}
+                        onChange={handleDesgloseChange}
+                        className="input w-full"
+                      />
+                      <div className="flex gap-2 w-full">
+                        <select
+                          name="operacion"
+                          value={newDesgloseItem.operacion}
+                          onChange={handleDesgloseChange}
+                          className="input text-center cursor-pointer !px-2 !pr-8"
+                          style={{ width: '6rem' }}
+                        >
+                          <option value="suma">+</option>
+                          <option value="resta">-</option>
+                        </select>
+                        <input
+                          type="number"
+                          name="monto"
+                          placeholder="0.00"
+                          step="0.01"
+                          value={newDesgloseItem.monto}
+                          onChange={handleDesgloseChange}
+                          className="input flex-1 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddDesglose}
+                          className="btn-secondary !px-4"
+                        >
+                          Añadir
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-text-secondary italic">Activa esta opción si este ingreso está compuesto por múltiples partes o incluye deducciones y comisiones que deseas rastrear de forma separada.</p>
+                )}
+              </div>
+
+              {/* Card 4: Recurrencia */}
+              {(!isEditing || (isEditing && hasGroup && updateMode === 'series')) && (
+                <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="flex flex-col gap-4">
+                    {isEditing ? (
+                      <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 p-4 rounded-xl">
+                        Nota: Al editar una serie existente, los parámetros de fechas y frecuencia están bloqueados por seguridad. Para cambiar la frecuencia, elimina la serie desde la base de datos y crea una nueva.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" name="es_recurrente" className="sr-only peer" checked={formData.es_recurrente} onChange={handleChange} />
+                            <div className="w-11 h-6 bg-surface-app/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-app"></div>
+                          </label>
+                          <div className="flex flex-col">
+                            <span className="text-lg font-bold text-text-primary">Ingreso Recurrente</span>
+                            <span className="text-xs text-text-secondary">Genera automáticamente futuros registros basados en un patrón.</span>
                           </div>
                         </div>
 
-                        {projectedDates.length > 0 && (
-                          <div className="bg-surface-app/30 border border-border-app p-4 flex flex-col gap-3">
-                            <div className="flex justify-between items-center border-b border-border-app pb-2">
-                              <h4 className="text-[10px] font-bold text-accent-app uppercase tracking-wider">
-                                {formData.limite_recurrencia ? 'Fechas de Ejecución' : 'Próximas 5 Fechas (Vista Previa)'}
-                              </h4>
-                              {formData.limite_recurrencia && (
-                                <button
-                                  type="button"
-                                  onClick={() => setIsCustomizingDates(!isCustomizingDates)}
-                                  className={`text-[9px] px-2 py-1 border ${isCustomizingDates ? 'bg-accent-app text-bg-app border-accent-app' : 'border-border-app text-text-secondary hover:text-text-primary'}`}
-                                >
-                                  {isCustomizingDates ? 'Desactivar Edición' : 'Personalizar Fechas'}
-                                </button>
-                              )}
+                        {formData.es_recurrente && (
+                          <div className="flex flex-col xl:flex-row gap-6 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex flex-col gap-6 xl:w-1/3">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-text-secondary ml-1">Frecuencia</label>
+                                <select name="frecuencia" value={formData.frecuencia} onChange={handleChange} className="input cursor-pointer">
+                                  <option value="semanal">Semanal</option>
+                                  <option value="quincenal">Quincenal</option>
+                                  <option value="mensual">Mensual</option>
+                                </select>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-text-secondary ml-1">Duración Límite (Opcional)</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    id="limite_recurrencia"
+                                    name="limite_recurrencia"
+                                    value={formData.limite_recurrencia}
+                                    onChange={handleChange}
+                                    placeholder="Ej. 12"
+                                    min="1"
+                                    className="input w-full pr-24 font-mono"
+                                  />
+                                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-text-secondary pointer-events-none">
+                                    {formData.frecuencia === 'semanal' ? 'Semanas' : formData.frecuencia === 'quincenal' ? 'Quincenas' : 'Meses'}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                              {projectedDates.map((d, i) => (
-                                <div key={i} className="flex flex-col gap-1">
-                                  <span className="text-[9px] text-text-secondary">#{i + 1}</span>
-                                  {isCustomizingDates ? (
-                                    <input
-                                      type="date"
-                                      value={d}
-                                      onChange={(e) => handleCustomDateChange(i, e.target.value)}
-                                      className="bg-bg-app border border-border-app p-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-app w-full"
-                                    />
-                                  ) : (
-                                    <span className="text-xs font-mono bg-surface-app/50 border border-border-app p-1.5 text-text-primary text-center">
-                                      {d}
-                                    </span>
+                            {projectedDates.length > 0 && (
+                              <div className="bg-bg-app rounded-2xl border border-border-app/30 p-5 flex flex-col gap-4 flex-1">
+                                <div className="flex justify-between items-center border-b border-border-app/30 pb-3">
+                                  <h4 className="text-sm font-bold text-accent-app">
+                                    {formData.limite_recurrencia ? 'Fechas Proyectadas' : 'Próximas 5 Fechas (Vista Previa)'}
+                                  </h4>
+                                  {formData.limite_recurrencia && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsCustomizingDates(!isCustomizingDates)}
+                                      className={isCustomizingDates ? 'btn-primary px-3 py-1.5 text-xs' : 'btn-secondary px-3 py-1.5 text-xs'}
+                                    >
+                                      {isCustomizingDates ? 'Terminar Edición' : 'Editar Fechas'}
+                                    </button>
                                   )}
                                 </div>
-                              ))}
-                            </div>
 
-                            {!formData.limite_recurrencia && (
-                              <p className="text-[9px] text-text-secondary italic">Como no hay límite, la serie será tratada como una plantilla continua.</p>
-                            )}
-                            {formData.limite_recurrencia && (
-                              <p className="text-[9px] text-emerald-400 font-mono mt-1">
-                                Total proyectado a generar: {(parseFloat(formData.amount || 0) * (formData.tasa_cambio ? parseFloat(formData.tasa_cambio) : 1) * parseInt(formData.limite_recurrencia)).toFixed(2)} {baseCurrency}
-                              </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                                  {projectedDates.map((d, i) => (
+                                    <div key={i} className="flex flex-col gap-1.5">
+                                      <span className="text-[10px] font-bold text-text-secondary pl-1">Iteración {i + 1}</span>
+                                      {isCustomizingDates ? (
+                                        <input
+                                          type="date"
+                                          value={d}
+                                          onChange={(e) => handleCustomDateChange(i, e.target.value)}
+                                          className="input !py-1.5 text-xs"
+                                        />
+                                      ) : (
+                                        <span className="text-xs font-mono bg-surface-app rounded-xl border border-border-app/30 py-2 px-2 text-text-primary text-center truncate">
+                                          {d}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {!formData.limite_recurrencia && (
+                                  <p className="text-xs text-text-secondary italic mt-2">Como no hay límite especificado, la serie se tratará como un ingreso infinito que genera alertas al pasar cada periodo.</p>
+                                )}
+                                {formData.limite_recurrencia && (
+                                  <div className="flex justify-between items-center mt-2 bg-emerald-400/10 p-3 rounded-xl border border-emerald-400/20">
+                                    <span className="text-sm text-text-primary">Proyección Total:</span>
+                                    <span className="text-sm text-emerald-400 font-mono font-bold">
+                                      {(parseFloat(formData.amount || 0) * (formData.tasa_cambio ? parseFloat(formData.tasa_cambio) : 1) * parseInt(formData.limite_recurrencia)).toFixed(2)} {baseCurrency}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
-          <div className="pt-6 border-t border-border-app flex flex-col sm:flex-row justify-end gap-3">
+        </div>
+
+        {/* Barra de Acciones Fija (Bottom) */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+          <button
+            type="button"
+            onClick={() => setIsExtended(!isExtended)}
+            className="text-sm font-semibold text-text-secondary hover:text-accent-app transition-colors cursor-pointer mr-auto w-full sm:w-auto text-left flex items-center gap-2 select-none"
+          >
+            {isExtended ? 'Esconder Opciones Avanzadas' : 'Ver Opciones Avanzadas'}
+            <ChevronDown size={16} className={`transform transition-transform ${isExtended ? 'rotate-180' : ''}`} />
+          </button>
+
+          <div className="flex w-full sm:w-auto gap-3">
             <button
               type="button"
               onClick={onCancel || (() => setView('list'))}
-              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-text-secondary hover:text-text-primary border border-transparent hover:border-border-app transition-colors cursor-pointer uppercase tracking-wider"
+              className="btn-secondary flex-1 sm:flex-none px-8"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto bg-accent-app text-bg-app font-bold text-sm px-8 py-3 hover:opacity-90 transition-opacity active:scale-[0.98] cursor-pointer uppercase tracking-wider"
+              className="btn-primary flex-1 sm:flex-none px-8 shadow-lg shadow-accent-app/20"
             >
               {isEditing ? 'Guardar Cambios' : 'Guardar Ingreso'}
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+
+      </form>
     </div>
   )
 }
