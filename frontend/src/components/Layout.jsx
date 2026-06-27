@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Income from './Income'
 import Settings from './Settings'
+import DebtForm from './Debt/DebtForm'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -141,6 +142,12 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Income user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
+          ) : activeTab === 'debts' ? (
+            <DebtForm
+              user={user}
+              onCancel={() => alert("Simulación: Formulario Cerrado")}
+              onSave={(datos) => console.log("¡Datos del formulario listos para inyectar en Supabase!", datos)}
+            />
           ) : (
             <div className="w-full flex-1 card flex flex-col items-center justify-center min-h-[400px] text-center border-dashed">
               <div className="max-w-xl flex flex-col gap-4 items-center">
