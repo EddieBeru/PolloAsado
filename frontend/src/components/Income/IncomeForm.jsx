@@ -597,7 +597,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
           >
             {isExtended ? 'Esconder Opciones Avanzadas' : 'Ver Opciones Avanzadas'}
             <ChevronDown size={16} className={`transform transition-transform ${isExtended ? 'rotate-180' : ''}`} />
-          </button>
+          </button> 
 
           <div className="flex w-full sm:w-auto gap-3">
             <button
