@@ -3,6 +3,7 @@ import { supabase } from './lib/supabaseClient'
 import Login from './components/Login'
 import Layout from './components/Layout'
 import './App.css'
+import DebtForm from './components/Debt/DebtForm'
 
 function App() {
   const [theme, setTheme] = useState(() => {
@@ -64,16 +65,23 @@ function App() {
       {!session ? (
         <Login theme={theme} setTheme={setTheme} />
       ) : (
-        <Layout
-          user={session.user}
-          onLogout={handleLogout}
-          theme={theme}
-          setTheme={setTheme}
-        />
+        /* Aquí unificamos todo dentro de una sola caja contenedora */
+        <div className="w-full max-w-4xl p-6 flex flex-col gap-6">
+          <Layout
+            user={session.user}
+            onLogout={handleLogout}
+            theme={theme}
+            setTheme={setTheme}
+          />
+          <DebtForm 
+            user={session.user} 
+            onCancel={() => alert("Simulación: Formulario Cerrado")} 
+            onSave={(datos) => console.log("¡Datos del formulario listos para inyectar en Supabase!", datos)} 
+          />
+        </div>
       )}
     </div>
   )
 }
 
 export default App
-
