@@ -5,18 +5,18 @@ import { useState} from "react";
         amount: '', due_date: ''
     })
     const handleChange =(e)=> {
-        setFormData({
-            ...formData,
-            [e.target.name] : e.target.value //guardamos el dato segun el input del name
-        })
+         const nuevaData = { ...formData, [e.target.name]: e.target.value }
+    setFormData(nuevaData)
+    onPreview?.(nuevaData)
     }
-    const handleSubmit= (e)=> { //validar antes de guardar en base de datos
+    const handleSubmit= (e)=> { //validar antes de gcduardar en base de datos
          e.preventDefault() 
          if (!formData.amount|| !formData.due_date){
             alert("Please add the debt amount and the due date")
             return
         }
         onSave(formData)// inyectar en base de datos la informacion 
+       
     }
     return (
     
