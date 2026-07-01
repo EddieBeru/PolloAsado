@@ -1,6 +1,6 @@
 import { useState} from "react";
 
- export default function DebtForm({user, onCancel, onSave}) {// esto es una funcion en javascript
+ export default function DebtForm({ user, onCancel, onSave, onPreview }) {// esto es una funcion en javascript
     const [formData, setFormData]= useState({
         amount: '', due_date: ''
     })
