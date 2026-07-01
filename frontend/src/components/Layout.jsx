@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Income from './Income'
+import Outcome from './Outcome'
 import Settings from './Settings'
 import DebtForm from './Debt/DebtForm'
 import DebtAnalysis from './Debt/DebtAnalysis'
@@ -141,22 +142,24 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
         <div className="w-full max-w-[1600px] mx-auto p-5 md:p-8 lg:p-12 flex-1 flex flex-col">
           {activeTab === 'income' ? (
             <Income user={user} />
+          ) : activeTab === 'expenses' ? (
+            <Outcome user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
-  <div className="flex flex-col gap-6">
-    <DebtForm
-      user={user}
-      onCancel={() => alert("Simulación: Formulario Cerrado")}
-      onSave={(datos) => console.log("Guardar en Supabase:", datos)}
-      onPreview={(datos) => setDebtPreview(datos)}
-    />
-    <DebtAnalysis
-      amount={debtPreview.amount}
-      due_date={debtPreview.due_date}
-      ingresoMensual={3000}
-    />
-  </div>
+            <div className="flex flex-col gap-6">
+              <DebtForm
+                user={user}
+                onCancel={() => alert("Simulación: Formulario Cerrado")}
+                onSave={(datos) => console.log("Guardar en Supabase:", datos)}
+                onPreview={(datos) => setDebtPreview(datos)}
+              />
+              <DebtAnalysis
+                amount={debtPreview.amount}
+                due_date={debtPreview.due_date}
+                ingresoMensual={3000}
+              />
+            </div>
           ) : (
             <div className="w-full flex-1 card flex flex-col items-center justify-center min-h-[400px] text-center border-dashed">
               <div className="max-w-xl flex flex-col gap-4 items-center">
