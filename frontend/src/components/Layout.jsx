@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Income from './Income'
+import Outcome from './Outcome'
 import Settings from './Settings'
 import DebtForm from './Debt/DebtForm'
 import DebtAnalysis from './Debt/DebtAnalysis'
@@ -146,6 +147,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
         <div className="w-full max-w-[1600px] mx-auto p-5 md:p-8 lg:p-12 flex-1 flex flex-col">
           {activeTab === 'income' ? (
             <Income user={user} />
+          ) : activeTab === 'expenses' ? (
+            <Outcome user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
