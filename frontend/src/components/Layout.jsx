@@ -17,10 +17,11 @@ import {
 } from 'lucide-react'
 
 import polloSvg from '../assets/pollo.svg'
+import Dashboard from './Dashboard'
 
 export default function Layout({ user, onLogout, theme, setTheme }) {
   const tabs = [
-    { id: 'overview', name: 'Inicio', icon: LayoutDashboard },
+    { id: 'dashboard', name: 'Inicio', icon: LayoutDashboard },
     { id: 'income', name: 'Ingresos', icon: TrendingUp },
     { id: 'expenses', name: 'Gastos', icon: TrendingDown },
     { id: 'savings', name: 'Ahorros', icon: PiggyBank },
@@ -140,7 +141,9 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 pb-[72px] md:pb-0">
         <div className="w-full max-w-[1600px] mx-auto p-5 md:p-8 lg:p-12 flex-1 flex flex-col">
-          {activeTab === 'income' ? (
+          {activeTab === 'dashboard' ? (
+            <Dashboard user={user} />
+          ) : activeTab === 'income' ? (
             <Income user={user} />
           ) : activeTab === 'expenses' ? (
             <Outcome user={user} />
