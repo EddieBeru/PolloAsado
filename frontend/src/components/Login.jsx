@@ -55,6 +55,51 @@ export default function Login({ theme, setTheme }) {
     }
   }
 
+  // Enviar enlace mágico (inicio de sesión sin contraseña).
+  const handleMagicLink = async () => {
+    setError(null)
+    setSuccessMessage('')
+    if (!email) {
+      setError('Ingresa tu correo primero.')
+      return
+    }
+    setLoading(true)
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin, shouldCreateUser: false }
+      })
+      if (otpError) throw otpError
+      setSuccessMessage('Te enviamos un enlace mágico. Revisa tu correo para entrar.')
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar el enlace mágico.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Enviar enlace de cambio de contraseña.
+  const handleResetPassword = async () => {
+    setError(null)
+    setSuccessMessage('')
+    if (!email) {
+      setError('Ingresa tu correo primero.')
+      return
+    }
+    setLoading(true)
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
+      })
+      if (resetError) throw resetError
+      setSuccessMessage('Te enviamos un enlace para cambiar tu contraseña. Revisa tu correo.')
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar el enlace de cambio de contraseña.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className='w-full flex flex-row gap-8 my-auto justify-center'>
       <div className='lg:flex hidden w-full max-w-md card highlight flex-col gap-4 my-auto shadow-2xl shadow-bg-app items-center'>
@@ -177,6 +222,28 @@ export default function Login({ theme, setTheme }) {
           >
             {loading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
           </button>
+
+          {!isSignUp && (
+            <div className="flex flex-col gap-3 pt-4 border-t border-border-app/30">
+              <span className="text-xs font-semibold text-text-secondary text-center">O entra sin contraseña</span>
+              <button
+                type="button"
+                onClick={handleMagicLink}
+                disabled={loading}
+                className="btn-secondary w-full"
+              >
+                Enviarme un enlace mágico
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={loading}
+                className="text-sm text-text-secondary hover:text-text-primary text-center cursor-pointer"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
         </form>
 
         {/* Theme Picker inside Login page */}

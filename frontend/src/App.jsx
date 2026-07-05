@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 import Login from './components/Login'
+import UpdatePassword from './components/UpdatePassword'
 import Layout from './components/Layout'
 import './App.css'
 import DebtForm from './components/Debt/DebtForm'
@@ -14,6 +15,9 @@ function App() {
   })
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Flujo de recuperación: el link de reset dispara 'PASSWORD_RECOVERY' y crea una
+  // sesión temporal. Mientras esté activo, mostramos la pantalla de cambio de clave.
+  const [recovery, setRecovery] = useState(false)
 
   // Apply theme dynamically to the body and documentElement
   useEffect(() => {
@@ -32,6 +36,7 @@ function App() {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (_event === 'PASSWORD_RECOVERY') setRecovery(true)
       setSession(currentSession)
       setLoading(false)
     })
@@ -62,7 +67,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg-app text-text-primary flex justify-center items-start">
-      {!session ? (
+      {recovery ? (
+        <UpdatePassword
+          onDone={() => setRecovery(false)}
+          onCancel={async () => { await supabase.auth.signOut(); setRecovery(false) }}
+        />
+      ) : !session ? (
         <Login theme={theme} setTheme={setTheme} />
       ) : (
         /* Aquí unificamos todo dentro de una sola caja contenedora */
