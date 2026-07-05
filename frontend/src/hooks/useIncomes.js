@@ -20,6 +20,8 @@ export function useIncomes(user) {
   // Ventana de fecha actual (en un ref para leerla desde callbacks sin re-crearlos).
   const monthsBackRef = useRef(DEFAULT_MONTHS_BACK)
   const [windowStart, setWindowStart] = useState(monthsAgoStart(DEFAULT_MONTHS_BACK))
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
 
   // Instancia de localforage para ingresos
   const incomesStore = localforage.createInstance({
@@ -38,7 +40,7 @@ export function useIncomes(user) {
   // PULL: traer la ventana fresca de Supabase y mergear preservando pendientes.
   // No hace PUSH, así loadMore() no re-envía items pendientes.
   const pullRemote = async (monthsBack) => {
-    if (!user) return
+    if (!user) return null
     const start = monthsAgoStart(monthsBack)
 
     const { data: remoteIncomes, error: fetchError } = await supabase
@@ -51,7 +53,7 @@ export function useIncomes(user) {
       .gte('fecha', start)
       .order('fecha', { ascending: false })
 
-    if (fetchError || !remoteIncomes) return
+    if (fetchError || !remoteIncomes) return null
 
     const formattedRemote = remoteIncomes.map(item => ({
       ...item,
@@ -86,6 +88,7 @@ export function useIncomes(user) {
     await incomesStore.setItem('incomes_list', merged)
     setIncomes(merged)
     setWindowStart(start)
+    return merged.length
   }
 
   // 2. Lógica de Sincronización en Background (PUSH pendientes + PULL fresco)
@@ -183,15 +186,22 @@ export function useIncomes(user) {
   }
 
   // Ampliar la ventana de fecha y volver a jalar (sin re-PUSH).
+  // Si tras ampliar no hay más filas, marca hasMore=false para ocultar el botón.
   const loadMore = async () => {
+    if (loadingMore) return
+    setLoadingMore(true)
+    const before = incomes.length
     monthsBackRef.current += DEFAULT_MONTHS_BACK
-    await pullRemote(monthsBackRef.current)
+    const after = await pullRemote(monthsBackRef.current)
+    if (after != null && after <= before) setHasMore(false)
+    setLoadingMore(false)
   }
 
   // Ejecutar carga local y luego sync
   useEffect(() => {
     let isMounted = true
     monthsBackRef.current = DEFAULT_MONTHS_BACK
+    setHasMore(true)
     loadLocalData().then(localData => {
       if (isMounted) syncWithSupabase(localData)
     })
@@ -392,5 +402,5 @@ export function useIncomes(user) {
     syncWithSupabase(updatedIncomes)
   }
 
-  return { incomes, loading, isSyncing, addIncome, updateIncome, loadMore, windowStart }
+  return { incomes, loading, isSyncing, addIncome, updateIncome, loadMore, loadingMore, hasMore, windowStart }
 }

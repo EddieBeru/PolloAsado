@@ -209,7 +209,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
   }
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
+    <div className="w-full flex-1 flex flex-col gap-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="heading">
@@ -345,7 +345,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
           {isExtended && (
             <>
               {/* Card 2: Clasificación */}
-              <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="card flex flex-col gap-6 w-full">
                 <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Clasificación</h3>
 
                 <div className="flex flex-col gap-2">
@@ -398,7 +398,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
               </div>
 
               {/* Card 3: Desglose */}
-              <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="card flex flex-col gap-6 w-full">
                 <div className="flex items-center justify-between pb-2 border-b border-border-app/30">
                   <div className="flex flex-col">
                     <h3 className="text-lg font-bold text-text-primary">Desglose (Cuentas Divididas)</h3>
@@ -410,7 +410,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 </div>
 
                 {useDesglose ? (
-                  <div className="flex flex-col gap-4 mt-2 animate-in fade-in duration-300">
+                  <div className="flex flex-col gap-4 mt-2">
                     <p className="text-xs text-text-secondary">El monto principal se calculará en base a la suma o resta de estas sub-transacciones.</p>
 
                     {formData.desglose.length > 0 && (
@@ -475,7 +475,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
               {/* Card 4: Recurrencia */}
               {(!isEditing || (isEditing && hasGroup && updateMode === 'series')) && (
-                <div className="card flex flex-col gap-6 w-full animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="card flex flex-col gap-6 w-full">
                   <div className="flex flex-col gap-4">
                     {isEditing ? (
                       <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 p-4 rounded-xl">
@@ -495,7 +495,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                         </div>
 
                         {formData.es_recurrente && (
-                          <div className="flex flex-col xl:flex-row gap-6 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex flex-col xl:flex-row gap-6 mt-4">
                             <div className="flex flex-col gap-6 xl:w-1/3">
                               <div className="flex flex-col gap-2">
                                 <label className="text-sm font-semibold text-text-secondary ml-1">Frecuencia</label>

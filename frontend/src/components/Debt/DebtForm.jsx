@@ -20,7 +20,7 @@ import { useState} from "react";
     }
     return (
     
-    <div className="w-full card p-6 animate-in fade-in duration-300">
+    <div className="w-full card p-6">
       <div className="flex flex-col gap-1 mb-4">
         <h2 className="heading">Control Analítico de Deuda</h2>
         <p className="text-xs text-text-secondary">

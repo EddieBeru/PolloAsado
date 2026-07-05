@@ -20,7 +20,7 @@ export default function DebtAnalysis({ amount, due_date, ingresoMensual }) {
   const ingresoRestante = (ingreso - costoPorCuota).toFixed(2); // ← era "costoPorCutoa"
 
   return (
-    <div className="w-full card p-6 animate-in fade-in duration-300 flex flex-col gap-4">
+    <div className="w-full card p-6 flex flex-col gap-4">
 
       <div className="flex flex-col gap-1">
         <h3 className="heading">Análisis de tu Deuda</h3>

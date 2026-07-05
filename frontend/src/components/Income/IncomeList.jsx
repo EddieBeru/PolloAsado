@@ -3,23 +3,23 @@ import { useIncomes } from '../../hooks/useIncomes'
 import { useSettings } from '../../hooks/useSettings'
 import { fetchRangeTotals } from '../../lib/stats'
 
+// Mes actual en formato 'YYYY-MM' (hora local).
+const currentMonth = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 export default function IncomeList({ user, setView, handleEdit, handleAddNew }) {
   const { settings } = useSettings()
   const baseCurrency = settings?.divisa_principal || 'CRC'
 
-  const { incomes, loading, isSyncing, loadMore } = useIncomes(user)
+  const { incomes, loading, isSyncing, loadMore, loadingMore, hasMore } = useIncomes(user)
 
-  const [filters, setFilters] = useState(() => {
-    const savedFilters = sessionStorage.getItem('polloasado_income_filters')
-    return savedFilters ? JSON.parse(savedFilters) : { month: 'all' }
-  })
+  // Por defecto, el mes actual.
+  const [filters, setFilters] = useState(() => ({ month: currentMonth() }))
 
   const handleFilterChange = (e) => {
-    setFilters(prev => {
-      const newFilters = { ...prev, [e.target.name]: e.target.value }
-      sessionStorage.setItem('polloasado_income_filters', JSON.stringify(newFilters))
-      return newFilters
-    })
+    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   // Total autoritativo del mes seleccionado vía RPC (independiente de la ventana
@@ -46,8 +46,8 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
     )
   }
 
-  // 1. Extraer meses disponibles
-  const availableMonths = Array.from(new Set(incomes.map(inc => inc.date?.substring(0, 7)).filter(Boolean)))
+  // 1. Extraer meses disponibles (incluye siempre el mes actual, aunque esté vacío)
+  const availableMonths = Array.from(new Set([currentMonth(), ...incomes.map(inc => inc.date?.substring(0, 7)).filter(Boolean)]))
     .sort((a, b) => a.localeCompare(b)) // Ascendente
 
   // 2. Aplicar filtros abiertos
