@@ -42,6 +42,11 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
   ]
 
+  // 🛠️ FUNCIONES ESTABLES PARA EVITAR EL BUCLE INFINITO DE RENDERS
+  const handleCancelDebt = () => alert("Simulación: Formulario Cerrado");
+  const handleSaveDebt = (datos) => console.log("Guardar en Supabase:", datos);
+  const handlePreviewDebt = (datos) => setDebtPreview(datos);
+
   return (
     <div className="w-full min-h-screen bg-bg-app text-text-primary flex flex-col md:flex-row">
       {/* Mobile Header */}
@@ -151,11 +156,12 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
             <div className="flex flex-col gap-6">
+              {/* 🛠️ USANDO LAS FUNCIONES DE REFERENCIA FIJA */}
               <DebtForm
                 user={user}
-                onCancel={() => alert("Simulación: Formulario Cerrado")}
-                onSave={(datos) => console.log("Guardar en Supabase:", datos)}
-                onPreview={(datos) => setDebtPreview(datos)}
+                onCancel={handleCancelDebt}
+                onSave={handleSaveDebt}
+                onPreview={handlePreviewDebt}
               />
               <DebtAnalysis
                 amount={debtPreview.amount}

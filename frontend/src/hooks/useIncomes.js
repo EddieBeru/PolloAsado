@@ -64,17 +64,36 @@ export function useIncomes(user) {
             await supabase.from('desglose_ingresos').insert(desgloseData)
           }
         } else {
-          // INSERT
-          const { error: insertError } = await supabase
-            .from('ingresos')
-            .insert([dbIncomeData])
-            
-          if (insertError) {
-            console.error('Error insertando ingreso:', insertError)
-            continue // Si falla, sigue intentando con los demás. Este se quedará pending.
+          //  
+          
+          // Creamos un objeto limpio SOLO con las columnas que existen en Supabase
+          const cleanInsertData = {
+            id: item.id,
+            user_id: user.id,
+            monto: item.monto,
+            descripcion: item.descripcion,
+            categoria: item.categoria || null,
+            fecha: item.fecha,
+            es_recurrente: item.es_recurrente || false,
+            frecuencia: item.frecuencia || null,
+            limite_recurrencia: item.limite_recurrencia || null,
+            grupo_recurrencia: item.grupo_recurrencia || null,
+            divisa_original: item.divisa_original || null,
+            monto_original: item.monto_original || null,
+            tasa_cambio: item.tasa_cambio || null
           }
 
-          // Insertar desglose si existe
+          const { error: insertError } = await supabase
+            .from('ingresos')
+            .insert([cleanInsertData]) //  Cambiamos dbIncomeData por nuestro objeto limpio
+            
+          if (insertError) {
+            // Le agregamos .message y .details para que si algo falla, te diga exactamente qué campo fue
+            console.error('Error insertando ingreso:', insertError.message, insertError.details)
+            continue 
+          }
+
+          // Insertar desglose si existe (Esto queda igual a como lo tenías)
           if (desglose && desglose.length > 0) {
             const desgloseData = desglose.map(sub => ({
               id: sub.id,
@@ -86,6 +105,8 @@ export function useIncomes(user) {
             }))
             await supabase.from('desglose_ingresos').insert(desgloseData)
           }
+          
+          
         }
       }
 
