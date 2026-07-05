@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { Palette } from 'lucide-react'
 import pollo from '../assets/pollo.svg'
+
+const THEME_OPTIONS = [
+  { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
+  { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
+  { id: 'sky', name: 'Azul', color: 'bg-sky-400' },
+  { id: 'amber', name: 'Oro', color: 'bg-amber-400' },
+  { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
+]
 
 export default function Login({ theme, setTheme }) {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -10,6 +19,7 @@ export default function Login({ theme, setTheme }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [showThemes, setShowThemes] = useState(false)
 
   const handleAuth = async (e) => {
     e.preventDefault()
@@ -19,33 +29,21 @@ export default function Login({ theme, setTheme }) {
 
     try {
       if (isSignUp) {
-        // Sign up with Supabase auth
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              nombre: name
-            }
-          }
+          options: { data: { nombre: name } }
         })
 
         if (signUpError) throw signUpError
 
-        // If user is successfully signed up and profile is created, we notify them
-        // Supabase may require email confirmation depending on settings.
         if (data?.user && data.user.identities?.length === 0) {
           setSuccessMessage('El correo ya está registrado. Intenta iniciar sesión.')
         } else {
           setSuccessMessage('Registro exitoso. Si es necesario, verifica tu correo o inicia sesión.')
         }
       } else {
-        // Sign in with password
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
-
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) throw signInError
       }
     } catch (err) {
@@ -104,11 +102,7 @@ export default function Login({ theme, setTheme }) {
     <div className='w-full flex flex-row gap-8 my-auto justify-center'>
       <div className='lg:flex hidden w-full max-w-md card highlight flex-col gap-4 my-auto shadow-2xl shadow-bg-app items-center'>
         <div className='flex items-center justify-center'>
-          <img
-            src={pollo}
-            className='size-30 relative drop-shadow-xl'
-            alt="PolloAsado Logo"
-          />
+          <img src={pollo} className='size-30 relative drop-shadow-xl' alt="PolloAsado Logo" />
         </div>
         <div className='text-center'>
           <h1 className='font-bold text-xl'>¡Bienvenid@ a PolloAsado!</h1>
@@ -120,8 +114,39 @@ export default function Login({ theme, setTheme }) {
           <p className='font-light text-gray-400 text-sm mt-8'>Proyecto desarrollado por un par de estudiantes entusiastas.</p>
         </div>
       </div>
-      <div className="w-full max-w-md card flex flex-col gap-8 my-auto shadow-2xl shadow-bg-app">
-        <div className="flex flex-col gap-2 text-center">
+
+      <div className="relative w-full max-w-md card flex flex-col gap-6 my-auto shadow-2xl shadow-bg-app">
+        {/* Selector de paleta: discreto, en la esquina */}
+        {theme && setTheme && (
+          <div className="absolute top-4 right-4">
+            <button
+              type="button"
+              onClick={() => setShowThemes((s) => !s)}
+              className="btn-icon"
+              title="Cambiar paleta de color"
+              aria-label="Cambiar paleta de color"
+              aria-expanded={showThemes}
+            >
+              <Palette className="w-4 h-4" />
+            </button>
+            {showThemes && (
+              <div className="absolute right-0 mt-2 flex gap-2 bg-bg-app border border-border-app/60 rounded-2xl p-2.5 shadow-xl">
+                {THEME_OPTIONS.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setTheme(t.id); setShowThemes(false) }}
+                    className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'}`}
+                    title={t.name}
+                    aria-label={`Cambiar a tema ${t.name}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-2 text-center">
+          <img src={pollo} className="size-12 lg:hidden" alt="PolloAsado Logo" />
           <h2 className="heading">PolloAsado</h2>
           <p className="text-sm text-text-secondary">
             {isSignUp ? 'Crea una cuenta' : 'Ingresa tus credenciales'}
@@ -131,31 +156,21 @@ export default function Login({ theme, setTheme }) {
         <div className="flex bg-bg-app rounded-2xl p-1">
           <button
             type="button"
-            onClick={() => {
-              setIsSignUp(false)
-              setError(null)
-              setSuccessMessage('')
-            }}
-            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${!isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'
-              }`}
+            onClick={() => { setIsSignUp(false); setError(null); setSuccessMessage('') }}
+            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${!isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'}`}
           >
             Iniciar Sesión
           </button>
           <button
             type="button"
-            onClick={() => {
-              setIsSignUp(true)
-              setError(null)
-              setSuccessMessage('')
-            }}
-            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'
-              }`}
+            onClick={() => { setIsSignUp(true); setError(null); setSuccessMessage('') }}
+            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'}`}
           >
             Registrarse
           </button>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-5">
+        <form onSubmit={handleAuth} className="flex flex-col gap-4">
           {isSignUp && (
             <div className="flex flex-col gap-2">
               <label htmlFor="name-input" className="text-sm font-semibold text-text-primary ml-1">
@@ -215,61 +230,32 @@ export default function Login({ theme, setTheme }) {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full mt-2"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full mt-1">
             {loading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
           </button>
 
           {!isSignUp && (
-            <div className="flex flex-col gap-3 pt-4 border-t border-border-app/30">
-              <span className="text-xs font-semibold text-text-secondary text-center">O entra sin contraseña</span>
+            <div className="flex items-center justify-center gap-4 text-sm">
               <button
                 type="button"
                 onClick={handleMagicLink}
                 disabled={loading}
-                className="btn-secondary w-full"
+                className="text-accent-app hover:opacity-80 font-semibold cursor-pointer disabled:opacity-50"
               >
-                Enviarme un enlace mágico
+                Enlace mágico
               </button>
+              <span className="text-border-app">·</span>
               <button
                 type="button"
                 onClick={handleResetPassword}
                 disabled={loading}
-                className="text-sm text-text-secondary hover:text-text-primary text-center cursor-pointer"
+                className="text-text-secondary hover:text-text-primary cursor-pointer disabled:opacity-50"
               >
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
           )}
         </form>
-
-        {/* Theme Picker inside Login page */}
-        {theme && setTheme && (
-          <div className="flex flex-col gap-3 pt-6 border-t border-border-app/30 items-center">
-            <span className="text-xs font-semibold text-text-secondary">Paleta de color</span>
-            <div className="flex gap-2">
-              {[
-                { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
-                { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
-                { id: 'sky', name: 'Azul', color: 'bg-sky-400' },
-                { id: 'amber', name: 'Oro', color: 'bg-amber-400' },
-                { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-150 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
-                    }`}
-                  title={t.name}
-                  aria-label={`Cambiar a tema ${t.name}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

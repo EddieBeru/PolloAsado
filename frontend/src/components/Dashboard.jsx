@@ -22,24 +22,24 @@ export default function Dashboard({ user }) {
 
     if (loadingIn || loadingOut) {
         return (
-            <div class="card flex flex-col gap-5">
-                <h1>El contenido está cargando  :P</h1>
+            <div className="w-full flex-1 flex items-center justify-center min-h-[50vh] text-text-secondary text-sm">
+                Cargando tu resumen…
             </div>
         )
     }
 
     return (
-        <div class="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
-            <div class="flex flex-col gap-2">
-                <h2 class="heading">
+        <div className="w-full flex-1 flex flex-col gap-8">
+            <div className="flex flex-col gap-2">
+                <h2 className="heading">
                     ¡Hola, {user.email}!
                 </h2>
-                <p class="text-sm text-text-secondary">
+                <p className="text-sm text-text-secondary">
                     Mira como se mueve tu plata acá. Vigila ingresos y gastos, deudas y ahorros; todo en un solo lugar.
                 </p>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="flex flex-col gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-8">
                     <CurrentBalance user={user} balance={balance} stale={stale} loading={loadingIn || loadingOut} />
                 </div>
             </div>

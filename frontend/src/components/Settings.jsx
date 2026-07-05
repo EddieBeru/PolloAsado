@@ -64,10 +64,14 @@ export default function Settings({ user, onLogout }) {
     updateSettings({ divisas_activas: settings.divisas_activas.filter(c => c !== cur) })
   }
 
-  if (loading) return <div className="p-8 text-text-secondary animate-pulse">Cargando ajustes...</div>
+  if (loading) return (
+    <div className="w-full flex-1 flex items-center justify-center min-h-[50vh] text-text-secondary text-sm">
+      Cargando ajustes…
+    </div>
+  )
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
+    <div className="w-full flex-1 flex flex-col gap-8">
 
       {/* HEADER */}
       <div className="flex flex-col gap-2">

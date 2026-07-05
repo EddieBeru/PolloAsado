@@ -40,10 +40,8 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
 
     if (loading) {
         return (
-            <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
-                <div className="w-full py-12 text-center text-text-secondary text-sm border border-dashed border-border-app animate-pulse">
-                    Cargando gastos...
-                </div>
+            <div className="w-full flex-1 flex items-center justify-center min-h-[50vh] text-text-secondary text-sm">
+                Cargando gastos…
             </div>
         )
     }
@@ -117,7 +115,7 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
     )
 
     return (
-        <div className="w-full flex-1 flex flex-col gap-8 animate-in fade-in duration-300">
+        <div className="w-full flex-1 flex flex-col gap-8">
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex flex-col gap-2">
