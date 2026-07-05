@@ -109,3 +109,13 @@ CREATE TABLE desglose_gastos (
   es_deduccion BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Capa de estadísticas (agregación server-side).
+-- Definida en migración 20260705120000_create_stats_rpcs.sql:
+--   Funciones SECURITY INVOKER (respetan RLS auth.uid() = user_id):
+--     get_balance(p_hasta date)                                 -> total_ingresos, total_gastos, balance (fecha <= p_hasta)
+--     get_range_totals(p_start date, p_end date)                -> totales en un rango arbitrario
+--     get_income_expense_series(p_start, p_end, p_granularity)  -> serie por periodo (day|week|month|year), shape Recharts
+--     get_totals_by_category(p_tipo, p_start, p_end)            -> total y cantidad por categoría (ingreso|gasto)
+--     get_top_categories(p_tipo, p_limit, p_start, p_end)       -> top-N categorías
+--   Índices: idx_ingresos_user_fecha (ingresos user_id, fecha), idx_gastos_user_fecha (gastos user_id, fecha)

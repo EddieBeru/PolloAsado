@@ -1,11 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import localforage from 'localforage'
 import { supabase } from '../lib/supabaseClient'
+
+// Ventana de fecha inicial (meses hacia atrás). loadMore() la amplía.
+const DEFAULT_MONTHS_BACK = 6
+
+// Primer día del mes hace `n` meses, formato 'YYYY-MM-DD'.
+const monthsAgoStart = (n) => {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - n)
+    return d.toISOString().split('T')[0]
+}
 
 export function useOutcomes(user) {
     const [outcomes, setOutcomes] = useState([])
     const [loading, setLoading] = useState(true)
     const [isSyncing, setIsSyncing] = useState(false)
+    const monthsBackRef = useRef(DEFAULT_MONTHS_BACK)
+    const [windowStart, setWindowStart] = useState(monthsAgoStart(DEFAULT_MONTHS_BACK))
 
     // Instancia de localforage para gastos
     const outcomesStore = localforage.createInstance({
@@ -21,7 +34,54 @@ export function useOutcomes(user) {
         return localData
     }
 
-    // 2. Lógica de Sincronización en Background
+    // PULL: traer la ventana fresca y mergear preservando pendientes (sin PUSH).
+    const pullRemote = async (monthsBack) => {
+        if (!user) return
+        const start = monthsAgoStart(monthsBack)
+
+        const { data: remoteOutcomes, error: fetchError } = await supabase
+            .from('gastos')
+            .select(`
+          *,
+          desglose:desglose_gastos(id, descripcion, monto, es_deduccion)
+        `)
+            .eq('user_id', user.id)
+            .gte('fecha', start)
+            .order('fecha', { ascending: false })
+
+        if (fetchError || !remoteOutcomes) return
+
+        const formattedRemote = remoteOutcomes.map(item => ({
+            ...item,
+            concept: item.descripcion,
+            amount: item.monto,
+            date: item.fecha,
+            category: item.categoria,
+            divisa_original: item.divisa_original,
+            monto_original: item.monto_original,
+            tasa_cambio: item.tasa_cambio,
+            // Mapear campos UI del desglose
+            desglose: item.desglose ? item.desglose.map(d => ({
+                id: d.id,
+                descripcion: d.descripcion,
+                monto: d.monto,
+                operacion: d.es_deduccion ? 'resta' : 'suma'
+            })) : [],
+            _isPendingSync: false // Ya están en Supabase
+        }))
+
+        // Preservar items locales aún pendientes que no vinieron en la página remota.
+        const localData = (await outcomesStore.getItem('outcomes_list')) || []
+        const remoteIds = new Set(formattedRemote.map(r => r.id))
+        const pendingKept = localData.filter(l => l._isPendingSync && !remoteIds.has(l.id))
+        const merged = [...pendingKept, ...formattedRemote]
+
+        await outcomesStore.setItem('outcomes_list', merged)
+        setOutcomes(merged)
+        setWindowStart(start)
+    }
+
+    // 2. Lógica de Sincronización en Background (PUSH pendientes + PULL fresco)
     const syncWithSupabase = async (localData) => {
         if (!user) return
         setIsSyncing(true)
@@ -32,8 +92,8 @@ export function useOutcomes(user) {
 
             for (const item of pendingItems) {
                 const syncType = item._isPendingSync
-                // Extraemos solo lo que va a la tabla de gastos
-                const { _isPendingSync, desglose, concept, amount, date, category, account, notes, ...dbOutcomeData } = item
+                // Extraemos solo lo que va a la tabla de gastos (_deltaBase es solo local)
+                const { _isPendingSync, _deltaBase, desglose, concept, amount, date, category, account, notes, ...dbOutcomeData } = item
 
                 if (syncType === 'UPDATE_SINGLE') {
                     const { error: updateError } = await supabase
@@ -86,40 +146,8 @@ export function useOutcomes(user) {
                 }
             }
 
-            // -- B. PULL: Traer datos frescos de Supabase --
-            const { data: remoteOutcomes, error: fetchError } = await supabase
-                .from('gastos')
-                .select(`
-          *,
-          desglose:desglose_gastos(id, descripcion, monto, es_deduccion)
-        `)
-                .eq('user_id', user.id)
-                .order('fecha', { ascending: false })
-
-            if (!fetchError && remoteOutcomes) {
-                // Formatear los datos remotos para que la UI los entienda como antes
-                const formattedRemote = remoteOutcomes.map(item => ({
-                    ...item,
-                    concept: item.descripcion,
-                    amount: item.monto,
-                    date: item.fecha,
-                    category: item.categoria,
-                    divisa_original: item.divisa_original,
-                    monto_original: item.monto_original,
-                    tasa_cambio: item.tasa_cambio,
-                    // Mapear campos UI del desglose
-                    desglose: item.desglose ? item.desglose.map(d => ({
-                        id: d.id,
-                        descripcion: d.descripcion,
-                        monto: d.monto,
-                        operacion: d.es_deduccion ? 'resta' : 'suma'
-                    })) : [],
-                    _isPendingSync: false // Ya están en Supabase
-                }))
-
-                await outcomesStore.setItem('outcomes_list', formattedRemote)
-                setOutcomes(formattedRemote)
-            }
+            // -- B. PULL: Traer datos frescos de Supabase (ventana actual) --
+            await pullRemote(monthsBackRef.current)
 
         } catch (error) {
             console.error('Fallo en sincronización:', error)
@@ -128,9 +156,16 @@ export function useOutcomes(user) {
         }
     }
 
+    // Ampliar la ventana de fecha y volver a jalar (sin re-PUSH).
+    const loadMore = async () => {
+        monthsBackRef.current += DEFAULT_MONTHS_BACK
+        await pullRemote(monthsBackRef.current)
+    }
+
     // Ejecutar carga local y luego sync
     useEffect(() => {
         let isMounted = true
+        monthsBackRef.current = DEFAULT_MONTHS_BACK
         loadLocalData().then(localData => {
             if (isMounted) syncWithSupabase(localData)
         })
@@ -182,7 +217,8 @@ export function useOutcomes(user) {
             monto_original: originalAmount,
             tasa_cambio: rate,
             desglose: mappedDesglose,
-            _isPendingSync: true
+            _isPendingSync: true,
+            _deltaBase: 0 // INSERT: el baseline del servidor tenía 0
         }]
 
         const updatedOutcomes = [...newItems, ...outcomes]
@@ -218,6 +254,9 @@ export function useOutcomes(user) {
         const targetOutcome = outcomes.find(inc => inc.id === id)
         if (!targetOutcome) return
 
+        // _deltaBase: monto ya reflejado en el baseline del servidor.
+        const deltaBaseFor = (inc) => inc._isPendingSync ? (inc._deltaBase ?? 0) : parseFloat(inc.amount || 0)
+
         let updatedOutcomes = [...outcomes]
 
         updatedOutcomes = updatedOutcomes.map(inc => {
@@ -237,6 +276,7 @@ export function useOutcomes(user) {
                     date: formData.date,
                     category: formData.category,
                     desglose: mappedDesglose,
+                    _deltaBase: deltaBaseFor(inc),
                     _isPendingSync: inc._isPendingSync === true ? true : 'UPDATE_SINGLE'
                 }
             }
@@ -248,5 +288,5 @@ export function useOutcomes(user) {
         syncWithSupabase(updatedOutcomes)
     }
 
-    return { outcomes, loading, isSyncing, addOutcome, updateOutcome }
+    return { outcomes, loading, isSyncing, addOutcome, updateOutcome, loadMore, windowStart }
 }

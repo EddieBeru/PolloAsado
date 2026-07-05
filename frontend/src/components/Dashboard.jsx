@@ -1,11 +1,24 @@
+import { useEffect, useRef } from "react"
 import CurrentBalance from "./Dashboard/CurrentBalance"
 import { useIncomes } from '../hooks/useIncomes'
 import { useOutcomes } from '../hooks/useOutcomes'
+import { useBalance } from '../hooks/useBalance'
 
 export default function Dashboard({ user }) {
 
-    const { incomes, loadingIn, isSyncingIn } = useIncomes(user)
-    const { outcomes, loadingOut, isSyncingOut } = useOutcomes(user)
+    const { incomes, loading: loadingIn, isSyncing: isSyncingIn } = useIncomes(user)
+    const { outcomes, loading: loadingOut, isSyncing: isSyncingOut } = useOutcomes(user)
+
+    const { balance, stale, refresh } = useBalance(user, incomes, outcomes)
+
+    // Re-correr el RPC del baseline cuando termina una sincronización (true -> false),
+    // para que los items recién sincronizados pasen al baseline sin doble conteo.
+    const wasSyncing = useRef(false)
+    const syncing = isSyncingIn || isSyncingOut
+    useEffect(() => {
+        if (wasSyncing.current && !syncing) refresh()
+        wasSyncing.current = syncing
+    }, [syncing, refresh])
 
     if (loadingIn || loadingOut) {
         return (
@@ -27,7 +40,7 @@ export default function Dashboard({ user }) {
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="flex flex-col gap-8">
-                    <CurrentBalance user={user} incomes={incomes} outcomes={outcomes} loading={loadingIn || loadingOut} />
+                    <CurrentBalance user={user} balance={balance} stale={stale} loading={loadingIn || loadingOut} />
                 </div>
             </div>
         </div>

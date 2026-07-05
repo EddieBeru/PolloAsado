@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useIncomes } from '../../hooks/useIncomes'
 import { useSettings } from '../../hooks/useSettings'
+import { fetchRangeTotals } from '../../lib/stats'
 
 export default function IncomeList({ user, setView, handleEdit, handleAddNew }) {
   const { settings } = useSettings()
   const baseCurrency = settings?.divisa_principal || 'CRC'
 
-  const { incomes, loading, isSyncing } = useIncomes(user)
+  const { incomes, loading, isSyncing, loadMore } = useIncomes(user)
 
   const [filters, setFilters] = useState(() => {
     const savedFilters = sessionStorage.getItem('polloasado_income_filters')
@@ -20,6 +21,22 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
       return newFilters
     })
   }
+
+  // Total autoritativo del mes seleccionado vía RPC (independiente de la ventana
+  // cargada). En 'all' usamos la suma local del set cargado.
+  const [monthTotal, setMonthTotal] = useState(null)
+  useEffect(() => {
+    if (filters.month === 'all') { setMonthTotal(null); return }
+    let active = true
+    const [y, m] = filters.month.split('-')
+    const start = `${filters.month}-01`
+    const lastDay = new Date(Number(y), Number(m), 0).getDate()
+    const end = `${filters.month}-${String(lastDay).padStart(2, '0')}`
+    fetchRangeTotals({ start, end })
+      .then(r => { if (active) setMonthTotal(r.totalIngresos) })
+      .catch(() => { if (active) setMonthTotal(null) })
+    return () => { active = false }
+  }, [filters.month])
 
   if (loading) {
     return (
@@ -41,8 +58,9 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
     filteredIncomes = filteredIncomes.filter(inc => inc.date?.startsWith(filters.month))
   }
 
-  // Calcular resumen del mes (suma de filteredIncomes)
-  const totalAmount = filteredIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0)
+  // Resumen: en 'all' sumamos el set cargado; en un mes usamos el total del RPC.
+  const loadedTotal = filteredIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0)
+  const totalAmount = filters.month === 'all' ? loadedTotal : (monthTotal ?? loadedTotal)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -180,6 +198,15 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
               <h3 className="text-lg font-bold text-text-primary ml-1">Historial</h3>
               {pastIncomes.map(renderIncomeItem)}
             </div>
+          )}
+
+          {filters.month === 'all' && (
+            <button
+              onClick={loadMore}
+              className="btn-secondary self-center mt-2"
+            >
+              Cargar meses anteriores
+            </button>
           )}
         </div>
       )}
