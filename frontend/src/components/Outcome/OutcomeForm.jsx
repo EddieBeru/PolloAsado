@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useOutcomes } from '../../hooks/useOutcomes'
 import { useSettings } from '../../hooks/useSettings'
+import { formatMoney, toNumber } from '../../lib/format'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
+
+// Topes de captura. No son reglas de negocio: evitan que un dedo pegado o un
+// pegado accidental deje un registro imposible de leer o de guardar.
+const MAX_CONCEPT = 120
+const MAX_NOTES = 500
+const MAX_DESGLOSE_DESC = 120
+const MAX_AMOUNT = 1e12
 
 export default function OutcomeForm({ user, setView, initialData, onCancel }) {
     const { settings, getCachedRate, setCachedRate } = useSettings()
@@ -137,43 +145,101 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
         setNewDesgloseItem((prev) => ({ ...prev, [name]: value }))
     }
 
+    // El total del desglose puede dar negativo (deducciones > sumas). Lo dejamos
+    // ver tal cual en vez de silenciarlo a 0.00: la validación lo bloquea al
+    // guardar y el usuario entiende por qué.
+    const desgloseTotal = (items) => items.reduce((acc, curr) => {
+        const val = toNumber(curr.monto)
+        return curr.operacion === 'suma' ? acc + val : acc - val
+    }, 0)
+
+    const [desgloseError, setDesgloseError] = useState('')
+
     const handleAddDesglose = () => {
-        if (!newDesgloseItem.descripcion || !newDesgloseItem.monto) return
-        const item = { ...newDesgloseItem, id: Date.now() }
+        const descripcion = newDesgloseItem.descripcion.trim()
+        const monto = toNumber(newDesgloseItem.monto)
+
+        if (!descripcion) { setDesgloseError('Poné una descripción.'); return }
+        if (monto <= 0) { setDesgloseError('El monto de la parte tiene que ser mayor que cero.'); return }
+        setDesgloseError('')
+
+        // UUID propio: la fila viaja a Supabase con este id y la columna es uuid.
+        const item = { ...newDesgloseItem, descripcion, id: crypto.randomUUID() }
         const updatedDesglose = [...formData.desglose, item]
 
-        const total = updatedDesglose.reduce((acc, curr) => {
-            const val = parseFloat(curr.monto)
-            return curr.operacion === 'suma' ? acc + val : acc - val
-        }, 0)
-
-        setFormData({ ...formData, desglose: updatedDesglose, amount: total > 0 ? total.toFixed(2) : '0.00' })
+        setFormData({ ...formData, desglose: updatedDesglose, amount: desgloseTotal(updatedDesglose).toFixed(2) })
         setNewDesgloseItem({ descripcion: '', monto: '', operacion: 'suma' })
     }
 
     const handleRemoveDesglose = (id) => {
         const updatedDesglose = formData.desglose.filter(i => i.id !== id)
+        setFormData({ ...formData, desglose: updatedDesglose, amount: desgloseTotal(updatedDesglose).toFixed(2) })
+    }
 
-        const total = updatedDesglose.reduce((acc, curr) => {
-            const val = parseFloat(curr.monto)
-            return curr.operacion === 'suma' ? acc + val : acc - val
-        }, 0)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [formError, setFormError] = useState(null)
+    const [fieldErrors, setFieldErrors] = useState({})
 
-        setFormData({ ...formData, desglose: updatedDesglose, amount: total > 0 ? total.toFixed(2) : '0.00' })
+    const validate = () => {
+        const errors = {}
+
+        const concept = formData.concept.trim()
+        if (!concept) errors.concept = 'Escribí un concepto para reconocer este gasto.'
+        else if (concept.length > MAX_CONCEPT) errors.concept = `Máximo ${MAX_CONCEPT} caracteres.`
+
+        const amount = toNumber(formData.amount, NaN)
+        if (!Number.isFinite(amount)) errors.amount = 'Escribí un monto válido.'
+        else if (amount <= 0) {
+            errors.amount = useDesglose
+                ? 'El desglose suma cero o menos. Revisá las partes.'
+                : 'El monto tiene que ser mayor que cero.'
+        } else if (amount > MAX_AMOUNT) errors.amount = 'Ese monto es demasiado grande.'
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) errors.date = 'Elegí una fecha válida.'
+
+        if (!formData.category) errors.category = 'Elegí una categoría.'
+
+        if (formData.notes && formData.notes.length > MAX_NOTES) {
+            errors.notes = `Máximo ${MAX_NOTES} caracteres.`
+        }
+
+        return errors
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (isSubmitting) return // doble clic / doble Enter
+
+        const errors = validate()
+        setFieldErrors(errors)
+        if (Object.keys(errors).length > 0) {
+            setFormError('Revisá los campos marcados.')
+            return
+        }
+
+        setFormError(null)
+        setIsSubmitting(true)
 
         const finalData = {
             ...formData,
+            concept: formData.concept.trim(),
+            notes: (formData.notes || '').trim(),
             fechas_proyectadas: projectedDates
         }
 
-        if (isEditing) {
-            await updateOutcome(initialData.id, finalData, updateMode)
-        } else {
-            await addOutcome(finalData)
+        try {
+            if (isEditing) {
+                await updateOutcome(initialData.id, finalData, updateMode)
+            } else {
+                await addOutcome(finalData)
+            }
+        } catch (err) {
+            // El guardado local falló (no la nube: eso se reintenta solo). Nos
+            // quedamos en el formulario con todo lo escrito intacto.
+            console.error('No se pudo guardar el gasto:', err)
+            setFormError('No se pudo guardar el gasto. Lo que escribiste sigue acá: intentá de nuevo.')
+            setIsSubmitting(false)
+            return
         }
 
         // After submit, return to list view
@@ -217,10 +283,16 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 name="concept"
                                 value={formData.concept}
                                 onChange={handleChange}
-                                placeholder="Ej. Salario quincenal, Venta de equipo..."
+                                placeholder="Ej. Súper, recibo de luz, gasolina..."
                                 required
+                                maxLength={MAX_CONCEPT}
+                                aria-invalid={!!fieldErrors.concept}
+                                aria-describedby={fieldErrors.concept ? 'concept-error' : undefined}
                                 className="input"
                             />
+                            {fieldErrors.concept && (
+                                <p id="concept-error" className="text-xs text-negative ml-1">{fieldErrors.concept}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -235,9 +307,12 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                     placeholder="0.00"
                                     step="0.01"
                                     min="0"
+                                    inputMode="decimal"
                                     required
                                     disabled={useDesglose}
-                                    className={`input w-full pr-24 font-mono font-bold ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-invalid={!!fieldErrors.amount}
+                                    aria-describedby={fieldErrors.amount ? 'amount-error' : undefined}
+                                    className={`input w-full pr-24 font-mono font-bold num ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                                 <select
                                     name="divisa_original"
@@ -251,10 +326,14 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 </select>
                             </div>
 
+                            {fieldErrors.amount && (
+                                <p id="amount-error" className="text-xs text-negative ml-1">{fieldErrors.amount}</p>
+                            )}
+
                             {formData.divisa_original !== baseCurrency && (
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono mt-1 px-1 gap-1">
                                     <div className="flex items-center gap-2">
-                                        <span className={rateError ? 'text-amber-400' : 'text-text-secondary'}>
+                                        <span className={rateError ? 'text-warning' : 'text-text-secondary'}>
                                             {isFetchingRate
                                                 ? 'Calculando tasa...'
                                                 : formData.tasa_cambio
@@ -272,8 +351,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         )}
                                     </div>
                                     {formData.amount && formData.tasa_cambio && (
-                                        <span className="text-emerald-400 font-bold">
-                                            Total: {(parseFloat(formData.amount) * parseFloat(formData.tasa_cambio)).toFixed(2)} {baseCurrency}
+                                        <span className="num text-text-primary font-bold">
+                                            Total: {formatMoney(toNumber(formData.amount) * toNumber(formData.tasa_cambio), baseCurrency)}
                                         </span>
                                     )}
                                 </div>
@@ -289,8 +368,13 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 value={formData.date}
                                 onChange={handleChange}
                                 required
+                                aria-invalid={!!fieldErrors.date}
+                                aria-describedby={fieldErrors.date ? 'date-error' : undefined}
                                 className="input font-mono scheme-dark"
                             />
+                            {fieldErrors.date && (
+                                <p id="date-error" className="text-xs text-negative ml-1">{fieldErrors.date}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -314,6 +398,9 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 <option value="Servicios">Servicios</option>
                                 <option value="Otros">Otros</option>
                             </select>
+                            {fieldErrors.category && (
+                                <p className="text-xs text-negative ml-1">{fieldErrors.category}</p>
+                            )}
                         </div>
                     </div>
 
@@ -349,8 +436,12 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         onChange={handleChange}
                                         placeholder="Detalles sobre este gasto..."
                                         rows="3"
+                                        maxLength={MAX_NOTES}
                                         className="input resize-y"
                                     ></textarea>
+                                    {fieldErrors.notes && (
+                                        <p className="text-xs text-negative ml-1">{fieldErrors.notes}</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -373,13 +464,13 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         {formData.desglose.length > 0 && (
                                             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                                 {formData.desglose.map(item => (
-                                                    <div key={item.id} className="flex items-center justify-between bg-bg-app rounded-xl px-4 py-3 border border-border-app/30">
-                                                        <span className="text-text-primary text-sm truncate max-w-[50%]">{item.descripcion}</span>
-                                                        <div className="flex items-center gap-4">
-                                                            <span className={`font-mono text-sm font-bold ${item.operacion === 'suma' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                                {item.operacion === 'suma' ? '+' : '-'}${parseFloat(item.monto).toFixed(2)}
+                                                    <div key={item.id} className="flex items-center justify-between gap-3 bg-bg-app rounded-xl px-4 py-3 border border-border-app/30">
+                                                        <span className="user-text text-text-primary text-sm max-w-[50%]" title={item.descripcion}>{item.descripcion}</span>
+                                                        <div className="flex items-center gap-4 shrink-0">
+                                                            <span className={`num font-mono text-sm font-bold ${item.operacion === 'suma' ? 'text-text-primary' : 'text-negative'}`}>
+                                                                {item.operacion === 'suma' ? '+' : '−'}{formatMoney(item.monto, baseCurrency, { absolute: true })}
                                                             </span>
-                                                            <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full cursor-pointer">×</button>
+                                                            <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full cursor-pointer">×</button>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -393,6 +484,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                                 placeholder="Descripción (Ej. Transferencia Juan)"
                                                 value={newDesgloseItem.descripcion}
                                                 onChange={handleDesgloseChange}
+                                                maxLength={MAX_DESGLOSE_DESC}
                                                 className="input w-full"
                                             />
                                             <div className="flex gap-2 w-full">
@@ -423,6 +515,17 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                                     Añadir
                                                 </button>
                                             </div>
+                                            {desgloseError && (
+                                                <p className="text-xs text-negative ml-1">{desgloseError}</p>
+                                            )}
+                                            {formData.desglose.length > 0 && (
+                                                <div className="flex items-center justify-between pt-2 text-sm">
+                                                    <span className="text-text-secondary">Suma del desglose</span>
+                                                    <span className={`num font-mono font-bold ${toNumber(formData.amount) > 0 ? 'text-text-primary' : 'text-negative'}`}>
+                                                        {formatMoney(formData.amount, baseCurrency)}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
@@ -433,6 +536,10 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                     )}
 
                 </div>
+
+                {formError && (
+                    <p className="notice-negative" role="alert">{formError}</p>
+                )}
 
                 {/* Barra de Acciones Fija (Bottom) */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
@@ -449,15 +556,17 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                         <button
                             type="button"
                             onClick={onCancel || (() => setView('list'))}
+                            disabled={isSubmitting}
                             className="btn-secondary flex-1 sm:flex-none px-8"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
+                            disabled={isSubmitting}
                             className="btn-primary flex-1 sm:flex-none px-8 shadow-lg shadow-accent-app/20"
                         >
-                            {isEditing ? 'Guardar Cambios' : 'Guardar Gasto'}
+                            {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar Cambios' : 'Guardar Gasto'}
                         </button>
                     </div>
                 </div>

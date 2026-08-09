@@ -1,26 +1,40 @@
-import { useState} from "react";
+import { useState } from "react";
+import { toNumber } from "../../lib/format";
 
  export default function DebtForm({ user, onCancel, onSave, onPreview }) {// esto es una funcion en javascript
-    const [formData, setFormData]= useState({
+    const [formData, setFormData] = useState({
         amount: '', due_date: ''
     })
-    const handleChange =(e)=> {
-         const nuevaData = { ...formData, [e.target.name]: e.target.value }
-    setFormData(nuevaData)
-    onPreview?.(nuevaData)
+    // Errores por campo: el aviso vive al lado del campo, no en un alert nativo.
+    const [errors, setErrors] = useState({})
+
+    const handleChange = (e) => {
+        const nuevaData = { ...formData, [e.target.name]: e.target.value }
+        setFormData(nuevaData)
+        setErrors(prev => ({ ...prev, [e.target.name]: undefined }))
+        onPreview?.(nuevaData)
     }
-    const handleSubmit= (e)=> { //validar antes de gcduardar en base de datos
-         e.preventDefault() 
-         if (!formData.amount|| !formData.due_date){
-            alert("Please add the debt amount and the due date")
-            return
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+
+        const nextErrors = {}
+        const monto = toNumber(formData.amount, NaN)
+        if (!Number.isFinite(monto) || monto <= 0) {
+            nextErrors.amount = 'Escribí el monto de la deuda (mayor que cero).'
         }
-        onSave(formData)// inyectar en base de datos la informacion 
-       
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.due_date)) {
+            nextErrors.due_date = 'Elegí la fecha límite de pago.'
+        }
+
+        setErrors(nextErrors)
+        if (Object.keys(nextErrors).length > 0) return
+
+        onSave?.(formData)
     }
     return (
     
-    <div className="w-full card p-6">
+    <div className="w-full card">
       <div className="flex flex-col gap-1 mb-4">
         <h2 className="heading">Control Analítico de Deuda</h2>
         <p className="text-xs text-text-secondary">
@@ -41,8 +55,13 @@ import { useState} from "react";
             value={formData.amount}    // Enlace directo con el valor del estado
             onChange={handleChange}    // Función que lee los números al ser digitados
             placeholder="Ej: 75000"    // Texto de ejemplo en el fondo de la caja
-            className="input w-full"   // Estilo unificado del proyecto
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            aria-invalid={!!errors.amount}
+            className="input w-full num"
           />
+          {errors.amount && <p className="text-xs text-negative ml-1">{errors.amount}</p>}
         </div>
 
         {/* COMPONENTE PARA EL PUNTO 2: LAPSO DE TIEMPO / FECHA LÍMITE */}
@@ -55,8 +74,10 @@ import { useState} from "react";
             name="due_date"            // Nombre de la variable en el useState
             value={formData.due_date}  // Enlace con la fecha seleccionada
             onChange={handleChange}    // Función que captura el día elegido
-            className="input w-full"   // Estilo unificado del proyecto
+            aria-invalid={!!errors.due_date}
+            className="input w-full"
           />
+          {errors.due_date && <p className="text-xs text-negative ml-1">{errors.due_date}</p>}
         </div>
 
         {/* SECCIÓN DE BOTONES */}

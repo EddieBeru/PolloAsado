@@ -4,11 +4,11 @@ import { Palette } from 'lucide-react'
 import pollo from '../assets/pollo.svg'
 
 const THEME_OPTIONS = [
-  { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
-  { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
-  { id: 'sky', name: 'Azul', color: 'bg-sky-400' },
-  { id: 'amber', name: 'Oro', color: 'bg-amber-400' },
-  { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
+  { id: 'slate', name: 'Arena', color: 'bg-[var(--accent-slate)]' },
+  { id: 'emerald', name: 'Verde', color: 'bg-[var(--accent-emerald)]' },
+  { id: 'sky', name: 'Azul', color: 'bg-[var(--accent-sky)]' },
+  { id: 'amber', name: 'Oro', color: 'bg-[var(--accent-amber)]' },
+  { id: 'rose', name: 'Rosa', color: 'bg-[var(--accent-rose)]' }
 ]
 
 export default function Login({ theme, setTheme }) {
@@ -23,6 +23,7 @@ export default function Login({ theme, setTheme }) {
 
   const handleAuth = async (e) => {
     e.preventDefault()
+    if (loading) return // doble submit
     setError(null)
     setSuccessMessage('')
     setLoading(true)
@@ -111,7 +112,7 @@ export default function Login({ theme, setTheme }) {
             Te damos la bienvenida a tu plataforma de manejo de finanzas favorita.<br />
             Te ayudamos a entender qué ocurre con tu dinero y te damos consejos para que cada colón dure más.
           </h3>
-          <p className='font-light text-gray-400 text-sm mt-8'>Proyecto desarrollado por un par de estudiantes entusiastas.</p>
+          <p className='font-light text-text-secondary text-sm mt-8'>Proyecto desarrollado por un par de estudiantes entusiastas.</p>
         </div>
       </div>
 
@@ -183,6 +184,8 @@ export default function Login({ theme, setTheme }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Tu nombre"
+                maxLength={80}
+                autoComplete="name"
                 className="input"
               />
             </div>
@@ -199,6 +202,8 @@ export default function Login({ theme, setTheme }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ejemplo@correo.com"
+              autoComplete="email"
+              inputMode="email"
               className="input"
             />
           </div>
@@ -214,18 +219,20 @@ export default function Login({ theme, setTheme }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              minLength={isSignUp ? 6 : undefined}
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
               className="input"
             />
           </div>
 
           {error && (
-            <div className="text-sm text-rose-500 font-medium bg-rose-950/20 border border-rose-900/50 rounded-xl p-4">
+            <div className="notice-negative" role="alert">
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="text-sm text-emerald-400 font-medium bg-emerald-950/20 border border-emerald-900/50 rounded-xl p-4">
+            <div className="notice-positive" role="status">
               {successMessage}
             </div>
           )}

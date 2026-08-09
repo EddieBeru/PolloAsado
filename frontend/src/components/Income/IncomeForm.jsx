@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useIncomes } from '../../hooks/useIncomes'
 import { useSettings } from '../../hooks/useSettings'
+import { formatMoney, toNumber } from '../../lib/format'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
+
+// Topes de captura. No son reglas de negocio: evitan que un dedo pegado o un
+// pegado accidental deje un registro imposible de leer o de guardar.
+const MAX_CONCEPT = 120
+const MAX_NOTES = 500
+const MAX_DESGLOSE_DESC = 120
+const MAX_AMOUNT = 1e12
+const MAX_RECURRENCIAS = 120
 
 export default function IncomeForm({ user, setView, initialData, onCancel }) {
   const { settings, getCachedRate, setCachedRate } = useSettings()
@@ -164,43 +173,106 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
     setNewDesgloseItem((prev) => ({ ...prev, [name]: value }))
   }
 
+  // El total del desglose puede dar negativo (deducciones > sumas). Lo dejamos
+  // ver tal cual en vez de silenciarlo a 0.00: la validación lo bloquea al
+  // guardar y el usuario entiende por qué.
+  const desgloseTotal = (items) => items.reduce((acc, curr) => {
+    const val = toNumber(curr.monto)
+    return curr.operacion === 'suma' ? acc + val : acc - val
+  }, 0)
+
+  const [desgloseError, setDesgloseError] = useState('')
+
   const handleAddDesglose = () => {
-    if (!newDesgloseItem.descripcion || !newDesgloseItem.monto) return
-    const item = { ...newDesgloseItem, id: Date.now() }
+    const descripcion = newDesgloseItem.descripcion.trim()
+    const monto = toNumber(newDesgloseItem.monto)
+
+    if (!descripcion) { setDesgloseError('Poné una descripción.'); return }
+    if (monto <= 0) { setDesgloseError('El monto de la parte tiene que ser mayor que cero.'); return }
+    setDesgloseError('')
+
+    // UUID propio: la fila viaja a Supabase con este id y la columna es uuid.
+    const item = { ...newDesgloseItem, descripcion, id: crypto.randomUUID() }
     const updatedDesglose = [...formData.desglose, item]
 
-    const total = updatedDesglose.reduce((acc, curr) => {
-      const val = parseFloat(curr.monto)
-      return curr.operacion === 'suma' ? acc + val : acc - val
-    }, 0)
-
-    setFormData({ ...formData, desglose: updatedDesglose, amount: total > 0 ? total.toFixed(2) : '0.00' })
+    setFormData({ ...formData, desglose: updatedDesglose, amount: desgloseTotal(updatedDesglose).toFixed(2) })
     setNewDesgloseItem({ descripcion: '', monto: '', operacion: 'suma' })
   }
 
   const handleRemoveDesglose = (id) => {
     const updatedDesglose = formData.desglose.filter(i => i.id !== id)
+    setFormData({ ...formData, desglose: updatedDesglose, amount: desgloseTotal(updatedDesglose).toFixed(2) })
+  }
 
-    const total = updatedDesglose.reduce((acc, curr) => {
-      const val = parseFloat(curr.monto)
-      return curr.operacion === 'suma' ? acc + val : acc - val
-    }, 0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState(null)
+  const [fieldErrors, setFieldErrors] = useState({})
 
-    setFormData({ ...formData, desglose: updatedDesglose, amount: total > 0 ? total.toFixed(2) : '0.00' })
+  const validate = () => {
+    const errors = {}
+
+    const concept = formData.concept.trim()
+    if (!concept) errors.concept = 'Escribí un concepto para reconocer este ingreso.'
+    else if (concept.length > MAX_CONCEPT) errors.concept = `Máximo ${MAX_CONCEPT} caracteres.`
+
+    const amount = toNumber(formData.amount, NaN)
+    if (!Number.isFinite(amount)) errors.amount = 'Escribí un monto válido.'
+    else if (amount <= 0) {
+      errors.amount = useDesglose
+        ? 'El desglose suma cero o menos. Revisá las partes.'
+        : 'El monto tiene que ser mayor que cero.'
+    } else if (amount > MAX_AMOUNT) errors.amount = 'Ese monto es demasiado grande.'
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) errors.date = 'Elegí una fecha válida.'
+
+    if (formData.notes && formData.notes.length > MAX_NOTES) {
+      errors.notes = `Máximo ${MAX_NOTES} caracteres.`
+    }
+
+    if (formData.es_recurrente && formData.limite_recurrencia !== '') {
+      const limite = toNumber(formData.limite_recurrencia, NaN)
+      if (!Number.isInteger(limite) || limite < 1 || limite > MAX_RECURRENCIAS) {
+        errors.limite_recurrencia = `Poné un número entero entre 1 y ${MAX_RECURRENCIAS}.`
+      }
+    }
+
+    return errors
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isSubmitting) return // doble clic / doble Enter
+
+    const errors = validate()
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      setFormError('Revisá los campos marcados.')
+      return
+    }
+
+    setFormError(null)
+    setIsSubmitting(true)
 
     const finalData = {
       ...formData,
+      concept: formData.concept.trim(),
+      notes: (formData.notes || '').trim(),
       fechas_proyectadas: projectedDates
     }
 
-    if (isEditing) {
-      await updateIncome(initialData.id, finalData, updateMode)
-    } else {
-      await addIncome(finalData)
+    try {
+      if (isEditing) {
+        await updateIncome(initialData.id, finalData, updateMode)
+      } else {
+        await addIncome(finalData)
+      }
+    } catch (err) {
+      // El guardado local falló (no la nube: eso se reintenta solo). Nos quedamos
+      // en el formulario con todo lo escrito intacto.
+      console.error('No se pudo guardar el ingreso:', err)
+      setFormError('No se pudo guardar el ingreso. Lo que escribiste sigue acá: intentá de nuevo.')
+      setIsSubmitting(false)
+      return
     }
 
     // After submit, return to list view
@@ -229,8 +301,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
       </div>
 
       {isEditing && hasGroup && (
-        <div className="card bg-amber-400/5 border-amber-400/30 flex flex-col gap-3">
-          <span className="text-sm font-bold text-amber-400">Edición de Serie Recurrente</span>
+        <div className="card bg-warning-soft border-warning-line flex flex-col gap-3">
+          <span className="text-sm font-bold text-warning">Edición de Serie Recurrente</span>
           <p className="text-sm text-text-secondary">Este ingreso pertenece a una serie recurrente. ¿Qué deseas editar?</p>
           <div className="flex flex-col sm:flex-row gap-4 mt-2">
             <label className="flex items-center gap-2 cursor-pointer text-sm text-text-primary font-semibold">
@@ -243,7 +315,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
             </label>
           </div>
           {updateMode === 'series' && (
-            <p className="text-xs text-amber-400 italic">Nota: Al editar toda la serie, se actualizará el concepto, monto y categoría para todas las instancias asociadas. Las fechas y la frecuencia no serán modificadas.</p>
+            <p className="text-xs text-warning italic">Nota: Al editar toda la serie, se actualizará el concepto, monto y categoría para todas las instancias asociadas. Las fechas y la frecuencia no serán modificadas.</p>
           )}
         </div>
       )}
@@ -266,8 +338,14 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 onChange={handleChange}
                 placeholder="Ej. Salario quincenal, Venta de equipo..."
                 required
+                maxLength={MAX_CONCEPT}
+                aria-invalid={!!fieldErrors.concept}
+                aria-describedby={fieldErrors.concept ? 'concept-error' : undefined}
                 className="input"
               />
+              {fieldErrors.concept && (
+                <p id="concept-error" className="text-xs text-negative ml-1">{fieldErrors.concept}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -282,9 +360,12 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                   placeholder="0.00"
                   step="0.01"
                   min="0"
+                  inputMode="decimal"
                   required
                   disabled={useDesglose}
-                  className={`input w-full pr-24 font-mono font-bold ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-invalid={!!fieldErrors.amount}
+                  aria-describedby={fieldErrors.amount ? 'amount-error' : undefined}
+                  className={`input w-full pr-24 font-mono font-bold num ${useDesglose ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 <select
                   name="divisa_original"
@@ -298,10 +379,14 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 </select>
               </div>
 
+              {fieldErrors.amount && (
+                <p id="amount-error" className="text-xs text-negative ml-1">{fieldErrors.amount}</p>
+              )}
+
               {formData.divisa_original !== baseCurrency && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono mt-1 px-1 gap-1">
                   <div className="flex items-center gap-2">
-                    <span className={rateError ? 'text-amber-400' : 'text-text-secondary'}>
+                    <span className={rateError ? 'text-warning' : 'text-text-secondary'}>
                       {isFetchingRate
                         ? 'Calculando tasa...'
                         : formData.tasa_cambio
@@ -319,8 +404,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     )}
                   </div>
                   {formData.amount && formData.tasa_cambio && (
-                    <span className="text-emerald-400 font-bold">
-                      Total: {(parseFloat(formData.amount) * parseFloat(formData.tasa_cambio)).toFixed(2)} {baseCurrency}
+                    <span className="num text-positive font-bold">
+                      Total: {formatMoney(toNumber(formData.amount) * toNumber(formData.tasa_cambio), baseCurrency)}
                     </span>
                   )}
                 </div>
@@ -336,8 +421,13 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 value={formData.date}
                 onChange={handleChange}
                 required
+                aria-invalid={!!fieldErrors.date}
+                aria-describedby={fieldErrors.date ? 'date-error' : undefined}
                 className="input font-mono [color-scheme:dark]"
               />
+              {fieldErrors.date && (
+                <p id="date-error" className="text-xs text-negative ml-1">{fieldErrors.date}</p>
+              )}
             </div>
           </div>
 
@@ -392,8 +482,12 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     onChange={handleChange}
                     placeholder="Detalles sobre este ingreso..."
                     rows="3"
+                    maxLength={MAX_NOTES}
                     className="input resize-y"
                   ></textarea>
+                  {fieldErrors.notes && (
+                    <p className="text-xs text-negative ml-1">{fieldErrors.notes}</p>
+                  )}
                 </div>
               </div>
 
@@ -416,13 +510,13 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     {formData.desglose.length > 0 && (
                       <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                         {formData.desglose.map(item => (
-                          <div key={item.id} className="flex items-center justify-between bg-bg-app rounded-xl px-4 py-3 border border-border-app/30">
-                            <span className="text-text-primary text-sm truncate max-w-[50%]">{item.descripcion}</span>
-                            <div className="flex items-center gap-4">
-                              <span className={`font-mono text-sm font-bold ${item.operacion === 'suma' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {item.operacion === 'suma' ? '+' : '-'}${parseFloat(item.monto).toFixed(2)}
+                          <div key={item.id} className="flex items-center justify-between gap-3 bg-bg-app rounded-xl px-4 py-3 border border-border-app/30">
+                            <span className="user-text text-text-primary text-sm max-w-[50%]" title={item.descripcion}>{item.descripcion}</span>
+                            <div className="flex items-center gap-4 shrink-0">
+                              <span className={`num font-mono text-sm font-bold ${item.operacion === 'suma' ? 'text-positive' : 'text-negative'}`}>
+                                {item.operacion === 'suma' ? '+' : '−'}{formatMoney(item.monto, baseCurrency, { absolute: true })}
                               </span>
-                              <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full cursor-pointer">×</button>
+                              <button type="button" onClick={() => handleRemoveDesglose(item.id)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full cursor-pointer">×</button>
                             </div>
                           </div>
                         ))}
@@ -436,6 +530,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                         placeholder="Descripción (Ej. Transferencia Juan)"
                         value={newDesgloseItem.descripcion}
                         onChange={handleDesgloseChange}
+                        maxLength={MAX_DESGLOSE_DESC}
                         className="input w-full"
                       />
                       <div className="flex gap-2 w-full">
@@ -466,6 +561,17 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                           Añadir
                         </button>
                       </div>
+                      {desgloseError && (
+                        <p className="text-xs text-negative ml-1">{desgloseError}</p>
+                      )}
+                      {formData.desglose.length > 0 && (
+                        <div className="flex items-center justify-between pt-2 text-sm">
+                          <span className="text-text-secondary">Suma del desglose</span>
+                          <span className={`num font-mono font-bold ${toNumber(formData.amount) > 0 ? 'text-text-primary' : 'text-negative'}`}>
+                            {formatMoney(formData.amount, baseCurrency)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -478,7 +584,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 <div className="card flex flex-col gap-6 w-full">
                   <div className="flex flex-col gap-4">
                     {isEditing ? (
-                      <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 p-4 rounded-xl">
+                      <p className="text-sm text-warning bg-warning-soft border border-warning-line p-4 rounded-xl">
                         Nota: Al editar una serie existente, los parámetros de fechas y frecuencia están bloqueados por seguridad. Para cambiar la frecuencia, elimina la serie desde la base de datos y crea una nueva.
                       </p>
                     ) : (
@@ -517,12 +623,19 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                                     onChange={handleChange}
                                     placeholder="Ej. 12"
                                     min="1"
-                                    className="input w-full pr-24 font-mono"
+                                    max={MAX_RECURRENCIAS}
+                                    step="1"
+                                    inputMode="numeric"
+                                    aria-invalid={!!fieldErrors.limite_recurrencia}
+                                    className="input w-full pr-24 font-mono num"
                                   />
                                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-text-secondary pointer-events-none">
                                     {formData.frecuencia === 'semanal' ? 'Semanas' : formData.frecuencia === 'quincenal' ? 'Quincenas' : 'Meses'}
                                   </span>
                                 </div>
+                                {fieldErrors.limite_recurrencia && (
+                                  <p className="text-xs text-negative ml-1">{fieldErrors.limite_recurrencia}</p>
+                                )}
                               </div>
                             </div>
 
@@ -567,10 +680,15 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                                   <p className="text-xs text-text-secondary italic mt-2">Como no hay límite especificado, la serie se tratará como un ingreso infinito que genera alertas al pasar cada periodo.</p>
                                 )}
                                 {formData.limite_recurrencia && (
-                                  <div className="flex justify-between items-center mt-2 bg-emerald-400/10 p-3 rounded-xl border border-emerald-400/20">
+                                  <div className="flex justify-between items-center mt-2 bg-positive-soft p-3 rounded-xl border border-positive-line">
                                     <span className="text-sm text-text-primary">Proyección Total:</span>
-                                    <span className="text-sm text-emerald-400 font-mono font-bold">
-                                      {(parseFloat(formData.amount || 0) * (formData.tasa_cambio ? parseFloat(formData.tasa_cambio) : 1) * parseInt(formData.limite_recurrencia)).toFixed(2)} {baseCurrency}
+                                    <span className="num text-sm text-positive font-mono font-bold">
+                                      {formatMoney(
+                                        toNumber(formData.amount) *
+                                        (formData.tasa_cambio ? toNumber(formData.tasa_cambio) : 1) *
+                                        toNumber(formData.limite_recurrencia, 0),
+                                        baseCurrency
+                                      )}
                                     </span>
                                   </div>
                                 )}
@@ -588,6 +706,10 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
         </div>
 
+        {formError && (
+          <p className="notice-negative" role="alert">{formError}</p>
+        )}
+
         {/* Barra de Acciones Fija (Bottom) */}
         <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
           <button
@@ -603,15 +725,17 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
             <button
               type="button"
               onClick={onCancel || (() => setView('list'))}
+              disabled={isSubmitting}
               className="btn-secondary flex-1 sm:flex-none px-8"
             >
               Cancelar
             </button>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="btn-primary flex-1 sm:flex-none px-8 shadow-lg shadow-accent-app/20"
             >
-              {isEditing ? 'Guardar Cambios' : 'Guardar Ingreso'}
+              {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar Cambios' : 'Guardar Ingreso'}
             </button>
           </div>
         </div>

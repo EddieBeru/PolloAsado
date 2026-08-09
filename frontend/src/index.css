@@ -1,54 +1,110 @@
 @import "tailwindcss";
 
 @theme {
+  /* Neutral shell */
   --color-bg-app: var(--bg-app);
   --color-surface-app: var(--surface-app);
+  --color-surface-raised: var(--surface-raised);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-accent-app: var(--accent-app);
+  --color-text-muted: var(--text-muted);
   --color-border-app: var(--border-app);
+  --color-border-strong: var(--border-strong);
+
+  /* Accent (swappable per data-theme) */
+  --color-accent-app: var(--accent-app);
+  --color-accent-soft: var(--accent-soft);
+
+  /* Semantic: money moving in, money moving out, needs attention */
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-positive-line: var(--positive-line);
+  --color-negative: var(--negative);
+  --color-negative-soft: var(--negative-soft);
+  --color-negative-line: var(--negative-line);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
 }
 
 :root {
-  /* Default Theme: Soft Dark (Zinc based) */
-  --bg-app: #18181b;
-  /* Zinc 900 */
-  --surface-app: #27272a;
-  /* Zinc 800 */
-  --text-primary: #f4f4f5;
-  /* Zinc 100 */
-  --text-secondary: #a1a1aa;
-  /* Zinc 400 */
-  --border-app: #3f3f46;
-  /* Zinc 700 */
-  --accent-app: #94a3b8;
-  /* Slate 400 */
+  /* --- Neutral shell: clay-tinted charcoal, hue 45 ---
+     Warmth lives in the hue of the neutrals, never in decoration.
+     Elevation is carried by lightness, not shadow. */
+  --bg-app: oklch(0.19 0.014 45);
+  --surface-app: oklch(0.245 0.016 45);
+  --surface-raised: oklch(0.3 0.018 45);
+
+  /* Ink ramp. Verified against all three surfaces:
+     primary 15.9:1 / secondary 8.6:1 / muted 6.1:1 on --bg-app,
+     muted still 4.52:1 on --surface-raised, the tightest pair in the system. */
+  --text-primary: oklch(0.95 0.008 45);
+  --text-secondary: oklch(0.76 0.014 45);
+  --text-muted: oklch(0.668 0.014 45);
+
+  --border-app: oklch(0.34 0.018 45);
+  /* Interactive borders (inputs, controls) clear the 3:1 UI-component floor
+     against --surface-app. --border-app is decorative and deliberately quieter. */
+  --border-strong: oklch(0.525 0.022 45);
+
+  /* --- Semantic money states ---
+     Fixed meaning everywhere: positive = money in / confirmed,
+     negative = money out / destructive, warning = pending or unresolved.
+     Never the sole signal: always paired with a label, sign, or icon. */
+  --positive: oklch(0.8 0.125 158);
+  --negative: oklch(0.715 0.145 25);
+  --warning: oklch(0.795 0.13 68);
+
+  --positive-soft: color-mix(in oklab, var(--positive) 14%, var(--surface-app));
+  --negative-soft: color-mix(in oklab, var(--negative) 14%, var(--surface-app));
+  --warning-soft: color-mix(in oklab, var(--warning) 14%, var(--surface-app));
+  --positive-line: color-mix(in oklab, var(--positive) 32%, var(--surface-app));
+  --negative-line: color-mix(in oklab, var(--negative) 32%, var(--surface-app));
+  --warning-line: color-mix(in oklab, var(--warning) 32%, var(--surface-app));
+
+  /* --- User-selectable accents (flat, no gradients) ---
+     All five sit at L 0.755-0.825 so they clear 4.5:1 as text on every surface
+     AND carry --bg-app text at 4.5:1+ when used as a filled button.
+     Declared once here; the picker swatches read these same values. */
+  --accent-slate: oklch(0.79 0.042 62);
+  --accent-emerald: oklch(0.8 0.125 160);
+  --accent-sky: oklch(0.79 0.098 232);
+  --accent-amber: oklch(0.825 0.13 88);
+  /* Sits at hue 356, not 15: keeps a clear read against --negative (hue 25)
+     so a rose accent never gets mistaken for an expense amount. */
+  --accent-rose: oklch(0.755 0.14 356);
+
+  /* Default accent, overridden by [data-theme] below */
+  --accent-app: var(--accent-slate);
+  --accent-soft: color-mix(in oklab, var(--accent-app) 12%, var(--surface-app));
 }
 
-/* User Customizable Color Palettes (Flat Accents only) */
 [data-theme="slate"] {
-  --accent-app: #94a3b8;
-  /* Slate 400 */
+  --accent-app: var(--accent-slate);
 }
 
 [data-theme="emerald"] {
-  --accent-app: #34d399;
-  /* Emerald 400 */
+  --accent-app: var(--accent-emerald);
 }
 
 [data-theme="sky"] {
-  --accent-app: #38bdf8;
-  /* Sky 400 */
+  --accent-app: var(--accent-sky);
 }
 
 [data-theme="amber"] {
-  --accent-app: #fbbf24;
-  /* Amber 400 */
+  --accent-app: var(--accent-amber);
 }
 
 [data-theme="rose"] {
-  --accent-app: #f43f5e;
-  /* Rose 500 */
+  --accent-app: var(--accent-rose);
+}
+
+/* Tailwind's --color-* aliases resolve where they are declared (:root), so a
+   [data-theme] set on <body> alone would never reach them. Re-resolve at body
+   level: the accent now follows the attribute wherever it is applied. */
+body {
+  --color-accent-app: var(--accent-app);
+  --color-accent-soft: var(--accent-soft);
 }
 
 /* Base Styles */
@@ -59,6 +115,13 @@ body {
   font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Light text on dark reads heavier; pull the weight back a step. */
+  font-weight: 380;
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--accent-app) 30%, transparent);
+  color: var(--text-primary);
 }
 
 /* Scrollbar styles */
@@ -82,12 +145,21 @@ body {
 
 /* --- Global Utility Classes --- */
 @layer components {
+  /* min-w-0 en vez de overflow-hidden: un texto largo dentro de un flex se
+     recorta con su propia regla, y el anillo de foco de un control interno ya
+     no queda cortado por el borde de la tarjeta. */
   .card {
-    @apply bg-surface-app rounded-2xl shadow-md border border-border-app/30 p-5 md:p-6 lg:p-8 overflow-hidden;
+    @apply bg-surface-app rounded-2xl border border-border-app/60 p-5 md:p-6 lg:p-8 min-w-0;
+  }
+
+  /* Nested detail (desglose line items) sits on the raised surface,
+     so depth reads without stacking a card inside a card. */
+  .well {
+    @apply bg-surface-raised rounded-xl border border-border-app/50 p-4;
   }
 
   .card.highlight {
-    @apply border-accent-app bg-accent-app/5;
+    @apply border-accent-app/70 bg-accent-soft;
   }
 
   .btn-primary {
@@ -95,20 +167,47 @@ body {
   }
 
   .btn-secondary {
-    @apply bg-surface-app text-text-primary border border-border-app rounded-2xl px-6 py-3 hover:border-accent-app active:scale-95 transition-all flex items-center justify-center gap-2;
+    @apply bg-surface-app text-text-primary border border-border-strong rounded-2xl px-6 py-3 hover:border-accent-app active:scale-95 transition-all flex items-center justify-center gap-2;
   }
 
   .btn-icon {
-    @apply p-2.5 bg-surface-app/50 border border-border-app rounded-full text-text-secondary hover:text-accent-app hover:border-accent-app hover:bg-bg-app transition-all cursor-pointer;
+    @apply p-2.5 bg-surface-app/50 border border-border-strong rounded-full text-text-secondary hover:text-accent-app hover:border-accent-app hover:bg-bg-app transition-all cursor-pointer;
+  }
+
+  /* Destructive actions read as destructive before they are clicked. */
+  .btn-danger {
+    @apply bg-negative-soft text-negative border border-negative-line rounded-2xl px-6 py-3 hover:bg-negative hover:text-bg-app active:scale-95 transition-all flex items-center justify-center gap-2;
   }
 
   .input {
-    @apply w-full bg-bg-app border border-border-app/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-app focus:ring-1 focus:ring-accent-app transition-all;
+    @apply w-full bg-bg-app border border-border-strong rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-app focus:ring-1 focus:ring-accent-app transition-all;
+  }
+
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Inline feedback blocks. Full hairline border, never a side stripe. */
+  .notice-positive {
+    @apply text-sm font-medium text-positive bg-positive-soft border border-positive-line rounded-xl p-4;
+  }
+
+  .notice-negative {
+    @apply text-sm font-medium text-negative bg-negative-soft border border-negative-line rounded-xl p-4;
+  }
+
+  .notice-warning {
+    @apply text-sm font-medium text-warning bg-warning-soft border border-warning-line rounded-xl p-4;
+  }
+
+  /* Small inline status marker, e.g. "Pendiente" on an unconverted amount. */
+  .tag-warning {
+    @apply inline-flex items-center gap-1.5 text-xs font-mono text-warning bg-warning-soft border border-warning-line px-2.5 py-1 rounded-full;
   }
 
   select {
     @apply appearance-none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%239c928e'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-position: right 0.75rem center;
     background-repeat: no-repeat;
     background-size: 1rem;
@@ -117,7 +216,7 @@ body {
 
   select:focus {
     @apply !outline-none !ring-0;
-    border-color: var(--border-app) !important;
+    border-color: var(--border-strong) !important;
   }
 
   option {
@@ -126,5 +225,82 @@ body {
 
   .heading {
     @apply text-xl md:text-2xl font-bold text-accent-app leading-tight;
+  }
+
+  /* --- Resiliencia de contenido --- */
+
+  /* Montos: cifras de ancho fijo (no bailan al actualizarse) y sin cortar a
+     mitad de número cuando la fila se estrecha. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Texto que viene del usuario: puede ser una sola palabra de 80 caracteres. */
+  .user-text {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  /* Igual, pero limitado a dos líneas dentro de una fila compacta. */
+  .user-text-clamp {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Bloque de carga. Reemplaza spinners en medio del contenido. */
+  .skeleton {
+    @apply bg-border-app/60 rounded-xl;
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Un control deshabilitado tiene que verse deshabilitado antes de hacer clic.
+   Aplica a todos los botones del sistema, no solo a los que lo recuerden. */
+button:disabled,
+button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:disabled:active,
+button[aria-disabled="true"]:active {
+  transform: none;
+}
+
+/* Keyboard focus is always visible, in the active accent. */
+:where(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-app);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

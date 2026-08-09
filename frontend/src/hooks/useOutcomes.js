@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import localforage from 'localforage'
 import { supabase } from '../lib/supabaseClient'
+import { toNumber } from '../lib/format'
 
 // Ventana de fecha inicial (meses hacia atrás). loadMore() la amplía.
 const DEFAULT_MONTHS_BACK = 6
+
+// Una sola instancia por store: crearla dentro del hook la recreaba en cada
+// render y abría una conexión IndexedDB nueva cada vez.
+const outcomesStore = localforage.createInstance({
+    name: 'PolloAsado',
+    storeName: 'outcomes'
+})
 
 // Primer día del mes hace `n` meses, formato 'YYYY-MM-DD'.
 const monthsAgoStart = (n) => {
@@ -21,19 +29,32 @@ export function useOutcomes(user) {
     const [windowStart, setWindowStart] = useState(monthsAgoStart(DEFAULT_MONTHS_BACK))
     const [loadingMore, setLoadingMore] = useState(false)
     const [hasMore, setHasMore] = useState(true)
-
-    // Instancia de localforage para gastos
-    const outcomesStore = localforage.createInstance({
-        name: 'PolloAsado',
-        storeName: 'outcomes'
-    })
+    // Mensaje visible cuando la sincronización falla. Los datos siguen guardados
+    // localmente, pero el usuario tiene que saber que la nube no los tiene todavía.
+    const [syncError, setSyncError] = useState(null)
 
     // 1. Carga inicial rápida desde caché local
     const loadLocalData = async () => {
-        const localData = (await outcomesStore.getItem('outcomes_list')) || []
+        let localData = []
+        try {
+            localData = (await outcomesStore.getItem('outcomes_list')) || []
+        } catch (err) {
+            console.error('No se pudo leer la caché de gastos:', err)
+            setSyncError('No se pudo leer el almacenamiento de este dispositivo.')
+        }
         setOutcomes(localData)
         setLoading(false)
         return localData
+    }
+
+    // Guardar en el dispositivo sin romper el flujo optimista si IndexedDB falla.
+    const persist = async (list) => {
+        try {
+            await outcomesStore.setItem('outcomes_list', list)
+        } catch (err) {
+            console.error('No se pudo guardar la caché de gastos:', err)
+            setSyncError('No se pudo guardar en este dispositivo. Sincronizá antes de cerrar la app.')
+        }
     }
 
     // PULL: traer la ventana fresca y mergear preservando pendientes (sin PUSH).
@@ -51,7 +72,15 @@ export function useOutcomes(user) {
             .gte('fecha', start)
             .order('fecha', { ascending: false })
 
-        if (fetchError || !remoteOutcomes) return null
+        if (fetchError || !remoteOutcomes) {
+            console.error('Error trayendo gastos:', fetchError)
+            setSyncError(
+                navigator.onLine
+                    ? 'No se pudieron traer tus gastos de la nube. Estás viendo la copia local.'
+                    : 'Sin conexión. Estás viendo la copia guardada en este dispositivo.'
+            )
+            return null
+        }
 
         const formattedRemote = remoteOutcomes.map(item => ({
             ...item,
@@ -78,7 +107,10 @@ export function useOutcomes(user) {
         const pendingKept = localData.filter(l => l._isPendingSync && !remoteIds.has(l.id))
         const merged = [...pendingKept, ...formattedRemote]
 
-        await outcomesStore.setItem('outcomes_list', merged)
+        // El PULL funcionó: limpiamos cualquier error anterior antes de intentar
+        // guardar, para no borrar el error que el guardado pueda producir.
+        setSyncError(null)
+        await persist(merged)
         setOutcomes(merged)
         setWindowStart(start)
         return merged.length
@@ -88,6 +120,9 @@ export function useOutcomes(user) {
     const syncWithSupabase = async (localData) => {
         if (!user) return
         setIsSyncing(true)
+
+        // Contamos los que quedaron sin subir para poder decirlo en la UI.
+        let failedPushes = 0
 
         try {
             // -- A. PUSH: Enviar elementos pendientes --
@@ -106,6 +141,7 @@ export function useOutcomes(user) {
 
                     if (updateError) {
                         console.error('Error actualizando gasto:', updateError)
+                        failedPushes++
                         continue
                     }
 
@@ -131,6 +167,7 @@ export function useOutcomes(user) {
 
                     if (insertError) {
                         console.error('Error insertando gasto:', insertError)
+                        failedPushes++
                         continue // Si falla, sigue intentando con los demás. Este se quedará pending.
                     }
 
@@ -152,8 +189,21 @@ export function useOutcomes(user) {
             // -- B. PULL: Traer datos frescos de Supabase (ventana actual) --
             await pullRemote(monthsBackRef.current)
 
+            // El PULL limpia syncError si tuvo éxito; si algo no subió, ese aviso pesa más.
+            if (failedPushes > 0) {
+                setSyncError(
+                    failedPushes === 1
+                        ? 'Un gasto quedó guardado solo en este dispositivo. Se reintentará.'
+                        : `${failedPushes} gastos quedaron guardados solo en este dispositivo. Se reintentarán.`
+                )
+            }
         } catch (error) {
             console.error('Fallo en sincronización:', error)
+            setSyncError(
+                navigator.onLine
+                    ? 'No se pudo sincronizar con la nube. Tus datos siguen guardados aquí.'
+                    : 'Sin conexión. Tus cambios se subirán cuando vuelva la señal.'
+            )
         } finally {
             setIsSyncing(false)
         }
@@ -165,10 +215,21 @@ export function useOutcomes(user) {
         if (loadingMore) return
         setLoadingMore(true)
         const before = outcomes.length
+        const previousWindow = monthsBackRef.current
         monthsBackRef.current += DEFAULT_MONTHS_BACK
-        const after = await pullRemote(monthsBackRef.current)
-        if (after != null && after <= before) setHasMore(false)
-        setLoadingMore(false)
+        try {
+            const after = await pullRemote(monthsBackRef.current)
+            // Si el PULL falló, la ventana no creció: la devolvemos para que el
+            // siguiente intento no salte un tramo de meses sin haberlo cargado.
+            if (after == null) monthsBackRef.current = previousWindow
+            else if (after <= before) setHasMore(false)
+        } catch (err) {
+            console.error('No se pudieron cargar meses anteriores:', err)
+            monthsBackRef.current = previousWindow
+            setSyncError('No se pudieron cargar meses anteriores. Intentá de nuevo.')
+        } finally {
+            setLoadingMore(false)
+        }
     }
 
     // Ejecutar carga local y luego sync
@@ -194,12 +255,12 @@ export function useOutcomes(user) {
 
         // Lógica Multi-divisa
         const baseCurrency = 'CRC' // Mantenemos la base coherente (idealmente se lee del contexto)
-        let finalAmount = parseFloat(formData.amount)
+        let finalAmount = toNumber(formData.amount)
         let originalAmount = null
         let rate = null
 
         if (formData.divisa_original !== baseCurrency && formData.tasa_cambio) {
-            rate = parseFloat(formData.tasa_cambio)
+            rate = toNumber(formData.tasa_cambio)
             originalAmount = finalAmount
             finalAmount = finalAmount * rate
         }
@@ -235,7 +296,7 @@ export function useOutcomes(user) {
 
         // Optimistic Update
         setOutcomes(updatedOutcomes)
-        await outcomesStore.setItem('outcomes_list', updatedOutcomes)
+        await persist(updatedOutcomes)
 
         // Lanzar sync al background sin esperar
         syncWithSupabase(updatedOutcomes)
@@ -251,12 +312,12 @@ export function useOutcomes(user) {
         }))
 
         const baseCurrency = 'CRC'
-        let finalAmount = parseFloat(formData.amount)
+        let finalAmount = toNumber(formData.amount)
         let originalAmount = null
         let rate = null
 
         if (formData.divisa_original !== baseCurrency && formData.tasa_cambio) {
-            rate = parseFloat(formData.tasa_cambio)
+            rate = toNumber(formData.tasa_cambio)
             originalAmount = finalAmount
             finalAmount = finalAmount * rate
         }
@@ -294,9 +355,9 @@ export function useOutcomes(user) {
         })
 
         setOutcomes(updatedOutcomes)
-        await outcomesStore.setItem('outcomes_list', updatedOutcomes)
+        await persist(updatedOutcomes)
         syncWithSupabase(updatedOutcomes)
     }
 
-    return { outcomes, loading, isSyncing, addOutcome, updateOutcome, loadMore, loadingMore, hasMore, windowStart }
+    return { outcomes, loading, isSyncing, syncError, addOutcome, updateOutcome, loadMore, loadingMore, hasMore, windowStart }
 }
