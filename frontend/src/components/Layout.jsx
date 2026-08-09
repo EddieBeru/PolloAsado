@@ -30,21 +30,43 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     { id: 'settings', name: 'Ajustes', icon: SettingsIcon }
   ]
 
-  const [activeTab, setActiveTab] = useState('overview')
+  // La pestaña sobrevive a un recargo (o a que el navegador descarte la pestaña
+  // en el celular). Si el valor guardado ya no existe, caemos al inicio.
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('polloasado_active_tab')
+      if (saved && tabs.some((t) => t.id === saved)) return saved
+    } catch (err) {
+      console.warn('No se pudo leer la pestaña guardada:', err)
+    }
+    return 'dashboard'
+  })
+
+  const selectTab = (id) => {
+    setActiveTab(id)
+    try {
+      sessionStorage.setItem('polloasado_active_tab', id)
+    } catch (err) {
+      console.warn('No se pudo guardar la pestaña activa:', err)
+    }
+  }
+
   const [debtPreview, setDebtPreview] = useState({ amount: '', due_date: '' })  //se guarda la informacion mientras el usuario ingresa los datos 
   const activeTabName = tabs.find((t) => t.id === activeTab)?.name || ''
 
   const themeOptions = [
-    { id: 'slate', name: 'Gris', color: 'bg-slate-400' },
-    { id: 'emerald', name: 'Verde', color: 'bg-emerald-400' },
-    { id: 'sky', name: 'Azul', color: 'bg-sky-400' },
-    { id: 'amber', name: 'Oro', color: 'bg-amber-400' },
-    { id: 'rose', name: 'Rosa', color: 'bg-rose-500' }
+    { id: 'slate', name: 'Arena', color: 'bg-[var(--accent-slate)]' },
+    { id: 'emerald', name: 'Verde', color: 'bg-[var(--accent-emerald)]' },
+    { id: 'sky', name: 'Azul', color: 'bg-[var(--accent-sky)]' },
+    { id: 'amber', name: 'Oro', color: 'bg-[var(--accent-amber)]' },
+    { id: 'rose', name: 'Rosa', color: 'bg-[var(--accent-rose)]' }
   ]
 
   // 🛠️ FUNCIONES ESTABLES PARA EVITAR EL BUCLE INFINITO DE RENDERS
-  const handleCancelDebt = () => alert("Simulación: Formulario Cerrado");
-  const handleSaveDebt = (datos) => console.log("Guardar en Supabase:", datos);
+  // Deudas todavía no persiste nada: el formulario solo alimenta el análisis en
+  // pantalla. Se dice en la UI en vez de fingir un guardado.
+  const handleCancelDebt = () => setDebtPreview({ amount: '', due_date: '' });
+  const handleSaveDebt = (datos) => setDebtPreview(datos);
   const handlePreviewDebt = (datos) => setDebtPreview(datos);
 
   return (
@@ -66,8 +88,10 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
 
         <div className="flex items-center justify-between">
           {user && (
-            <p className="text-xs text-text-secondary">
-              <span className="font-mono text-text-primary font-semibold">{user.user_metadata?.nombre || user.email}</span>
+            <p className="text-xs text-text-secondary min-w-0 mr-3">
+              <span className="font-mono text-text-primary font-semibold block truncate" title={user.user_metadata?.nombre || user.email}>
+                {user.user_metadata?.nombre || user.email}
+              </span>
             </p>
           )}
           <div className="flex gap-2">
@@ -75,6 +99,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}
+                aria-pressed={theme === t.id}
                 className={`w-5 h-5 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
                   }`}
                 title={t.name}
@@ -105,7 +130,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
+              aria-current={activeTab === tab.id ? 'page' : undefined}
               className={`text-left px-4 py-3.5 text-sm font-semibold transition-all duration-150 cursor-pointer rounded-2xl flex items-center gap-3 ${activeTab === tab.id
                 ? 'text-bg-app bg-accent-app shadow-md'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-app/80'
@@ -125,6 +151,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id)}
+                  aria-pressed={theme === t.id}
                   className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
                     }`}
                   title={t.name}
@@ -156,6 +183,9 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
             <div className="flex flex-col gap-6">
+              <p className="notice-warning" role="status">
+                Deudas está en vista previa: los datos alimentan el análisis en pantalla, pero todavía no se guardan.
+              </p>
               {/* 🛠️ USANDO LAS FUNCIONES DE REFERENCIA FIJA */}
               <DebtForm
                 user={user}
@@ -190,7 +220,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
+              aria-current={activeTab === tab.id ? 'page' : undefined}
               className={`whitespace-nowrap flex-1 justify-center px-4 py-3 text-[11px] font-semibold transition-all duration-150 cursor-pointer rounded-2xl flex items-center gap-2 ${activeTab === tab.id
                 ? 'text-bg-app bg-accent-app shadow-sm'
                 : 'text-text-secondary hover:text-text-primary'

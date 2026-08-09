@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react'
+import localforage from 'localforage'
 import { useSettings } from '../hooks/useSettings'
+
+// Stores locales que se borran al limpiar la caché. Las preferencias
+// (`settings`) se conservan a propósito: no son datos descargables de la nube.
+const CACHE_STORES = ['incomes', 'outcomes', 'balance']
 
 export default function Settings({ user, onLogout }) {
   const { settings, loading, updateSettings } = useSettings()
-  const [syncStatus, setSyncStatus] = useState('En línea (Sincronizado)')
+  const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState(null)
   const [categories, setCategories] = useState({
     ingreso: ['Salario', 'Negocio', 'Inversiones', 'Regalos', 'Otros'],
     gasto: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Hormiga']
@@ -14,27 +20,68 @@ export default function Settings({ user, onLogout }) {
 
   const [newCurrency, setNewCurrency] = useState('')
 
+  // Estado de red real, no un texto fijo que siempre dice "sincronizado".
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine)
+  useEffect(() => {
+    const update = () => setIsOnline(navigator.onLine)
+    window.addEventListener('online', update)
+    window.addEventListener('offline', update)
+    return () => {
+      window.removeEventListener('online', update)
+      window.removeEventListener('offline', update)
+    }
+  }, [])
+
+  // La sincronización corre al montar cada pantalla de datos, así que "forzar"
+  // es recargar: es lo que realmente vuelve a disparar PUSH + PULL.
   const handleForceSync = () => {
-    setSyncStatus('Sincronizando...')
-    setTimeout(() => {
-      setSyncStatus('En línea (Sincronizado hace un momento)')
-      alert('Sincronización con Supabase completada con éxito.')
-    }, 1500)
+    setActionError(null)
+    if (!navigator.onLine) {
+      setActionError('Sin conexión. Tus cambios se subirán solos cuando vuelva la señal.')
+      return
+    }
+    setBusy(true)
+    window.location.reload()
   }
 
-  const handleClearLocalData = () => {
-    if (window.confirm('¿Estás seguro de que deseas borrar toda la caché local? Se volverá a descargar desde la nube en la próxima recarga.')) {
-      alert('Caché local borrada. Recarga la aplicación.')
+  const handleClearLocalData = async () => {
+    const confirmed = window.confirm(
+      'Se borrará la copia local de ingresos, gastos y balance de este dispositivo.\n\n' +
+      'Lo que ya se sincronizó se vuelve a descargar. Lo que esté pendiente de subir se pierde.\n\n' +
+      '¿Continuar?'
+    )
+    if (!confirmed) return
+
+    setActionError(null)
+    setBusy(true)
+    try {
+      await Promise.all(
+        CACHE_STORES.map(storeName =>
+          localforage.createInstance({ name: 'PolloAsado', storeName }).clear()
+        )
+      )
+      window.location.reload()
+    } catch (err) {
+      console.error('No se pudo borrar la caché local:', err)
+      setActionError('No se pudo borrar la caché local en este dispositivo.')
+      setBusy(false)
     }
   }
 
   const handleAddCategory = (e) => {
     e.preventDefault()
-    if (!newCat.trim()) return
-
+    const name = newCat.trim()
+    if (!name) return
+    // Duplicados: comparación sin distinguir mayúsculas ni acentos de más.
+    const exists = categories[catType].some(c => c.toLowerCase() === name.toLowerCase())
+    if (exists) {
+      setActionError(`"${name}" ya existe en ${catType === 'ingreso' ? 'ingresos' : 'gastos'}.`)
+      return
+    }
+    setActionError(null)
     setCategories(prev => ({
       ...prev,
-      [catType]: [...prev[catType], newCat.trim()]
+      [catType]: [...prev[catType], name]
     }))
     setNewCat('')
   }
@@ -48,19 +95,28 @@ export default function Settings({ user, onLogout }) {
 
   const handleAddCurrency = (e) => {
     e.preventDefault()
-    if (!newCurrency.trim()) return
     const code = newCurrency.trim().toUpperCase()
-    if (!settings.divisas_activas.includes(code)) {
-      updateSettings({ divisas_activas: [...settings.divisas_activas, code] })
+    if (!code) return
+    // Un código inválido rompe el formateo de montos en toda la app.
+    if (!/^[A-Z]{3}$/.test(code)) {
+      setActionError('El código de divisa son 3 letras, por ejemplo USD o EUR.')
+      return
     }
+    if (settings.divisas_activas.includes(code)) {
+      setActionError(`${code} ya está en tu lista.`)
+      return
+    }
+    setActionError(null)
+    updateSettings({ divisas_activas: [...settings.divisas_activas, code] })
     setNewCurrency('')
   }
 
   const handleRemoveCurrency = (cur) => {
     if (cur === settings.divisa_principal) {
-      alert("No puedes eliminar tu divisa principal.")
+      setActionError('No podés eliminar tu divisa principal. Cambiala primero.')
       return
     }
+    setActionError(null)
     updateSettings({ divisas_activas: settings.divisas_activas.filter(c => c !== cur) })
   }
 
@@ -91,15 +147,15 @@ export default function Settings({ user, onLogout }) {
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Cuenta</h3>
             <div className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text-secondary">Correo Electrónico</span>
-              <span className="text-sm font-mono text-text-primary">{user?.email || 'Usuario de Prueba'}</span>
+              <span className="user-text text-sm font-mono text-text-primary">{user?.email || 'Sin correo asociado'}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text-secondary">Suscripción</span>
-              <span className="text-sm font-semibold text-emerald-400">Activa (Plan Gratuito)</span>
+              <span className="text-sm font-semibold text-positive">Activa (Plan Gratuito)</span>
             </div>
             <button
               onClick={onLogout}
-              className="btn-secondary text-rose-400 hover:text-rose-300 hover:border-rose-400/50 mt-2"
+              className="btn-danger mt-2"
             >
               Cerrar Sesión
             </button>
@@ -117,20 +173,30 @@ export default function Settings({ user, onLogout }) {
             </p>
 
             <div className="flex items-center gap-3 bg-surface-app/50 rounded-xl border border-border-app/30 p-4">
-              <div className={`w-2 h-2 rounded-full ${syncStatus.includes('Sincronizando') ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
-              <span className="text-sm font-mono text-text-primary">{syncStatus}</span>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-positive' : 'bg-warning'}`}></div>
+              <span className="text-sm text-text-primary" aria-live="polite">
+                {isOnline
+                  ? 'En línea. Los cambios se suben en segundo plano.'
+                  : 'Sin conexión. Todo queda guardado acá hasta que vuelva la señal.'}
+              </span>
             </div>
+
+            {actionError && (
+              <p className="notice-warning" role="alert">{actionError}</p>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 mt-2">
               <button
                 onClick={handleForceSync}
+                disabled={busy}
                 className="btn-secondary flex-1"
               >
-                Forzar Sync
+                {busy ? 'Recargando…' : 'Forzar Sync'}
               </button>
               <button
                 onClick={handleClearLocalData}
-                className="btn-secondary flex-1 text-rose-400 hover:text-rose-300 hover:border-rose-400/50"
+                disabled={busy}
+                className="btn-danger flex-1"
               >
                 Borrar Caché
               </button>
@@ -160,6 +226,7 @@ export default function Settings({ user, onLogout }) {
                 value={newCat}
                 onChange={(e) => setNewCat(e.target.value)}
                 placeholder="Nueva categoría..."
+                maxLength={40}
                 className="input flex-1"
               />
               <button type="submit" className="btn-primary px-4 aspect-square">+</button>
@@ -170,9 +237,9 @@ export default function Settings({ user, onLogout }) {
                 <span className="text-sm font-semibold text-text-secondary">Ingresos</span>
                 <div className="flex flex-wrap gap-2">
                   {categories.ingreso.map(cat => (
-                    <span key={`ing-${cat}`} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                    <span key={`ing-${cat}`} className="user-text bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 max-w-full">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('ingreso', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCategory('ingreso', cat)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
@@ -182,9 +249,9 @@ export default function Settings({ user, onLogout }) {
                 <span className="text-sm font-semibold text-text-secondary">Gastos</span>
                 <div className="flex flex-wrap gap-2">
                   {categories.gasto.map(cat => (
-                    <span key={`gas-${cat}`} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                    <span key={`gas-${cat}`} className="user-text bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 max-w-full">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('gasto', cat)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCategory('gasto', cat)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
@@ -228,7 +295,7 @@ export default function Settings({ user, onLogout }) {
                   <span key={cur} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 font-mono">
                     {cur}
                     {cur !== settings.divisa_principal && (
-                      <button onClick={() => handleRemoveCurrency(cur)} className="text-text-secondary hover:text-rose-400 font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCurrency(cur)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     )}
                   </span>
                 ))}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useIncomes } from '../../hooks/useIncomes'
 import { useSettings } from '../../hooks/useSettings'
 import { fetchRangeTotals } from '../../lib/stats'
+import { formatMoney, formatDate, formatMonth, toNumber } from '../../lib/format'
 
 // Mes actual en formato 'YYYY-MM' (hora local).
 const currentMonth = () => {
@@ -13,7 +14,7 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
   const { settings } = useSettings()
   const baseCurrency = settings?.divisa_principal || 'CRC'
 
-  const { incomes, loading, isSyncing, loadMore, loadingMore, hasMore } = useIncomes(user)
+  const { incomes, loading, isSyncing, syncError, loadMore, loadingMore, hasMore } = useIncomes(user)
 
   // Por defecto, el mes actual.
   const [filters, setFilters] = useState(() => ({ month: currentMonth() }))
@@ -32,18 +33,28 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
     const start = `${filters.month}-01`
     const lastDay = new Date(Number(y), Number(m), 0).getDate()
     const end = `${filters.month}-${String(lastDay).padStart(2, '0')}`
+    setMonthTotal(null)
     fetchRangeTotals({ start, end })
       .then(r => { if (active) setMonthTotal(r.totalIngresos) })
-      .catch(() => { if (active) setMonthTotal(null) })
+      .catch(err => {
+        console.error('No se pudo traer el total del mes:', err)
+        if (active) setMonthTotal(null)
+      })
     return () => { active = false }
   }, [filters.month])
 
   if (loading) {
-    return (
-      <div className="w-full flex-1 flex items-center justify-center min-h-[50vh] text-text-secondary text-sm">
-        Cargando ingresos…
-      </div>
-    )
+      return (
+          <div className="w-full flex-1 flex flex-col gap-6" aria-busy="true">
+              <div className="skeleton h-8 w-40" />
+              <div className="flex flex-col gap-4">
+                  {[0, 1, 2, 3].map(i => (
+                      <div key={i} className="skeleton h-20 w-full" />
+                  ))}
+              </div>
+              <span className="sr-only">Cargando ingresos…</span>
+          </div>
+      )
   }
 
   // 1. Extraer meses disponibles (incluye siempre el mes actual, aunque esté vacío)
@@ -57,8 +68,11 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
   }
 
   // Resumen: en 'all' sumamos el set cargado; en un mes usamos el total del RPC.
-  const loadedTotal = filteredIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0)
-  const totalAmount = filters.month === 'all' ? loadedTotal : (monthTotal ?? loadedTotal)
+  const loadedTotal = filteredIncomes.reduce((sum, inc) => sum + toNumber(inc.amount), 0)
+  // Si el RPC del mes no respondió, lo que mostramos es solo lo cargado en la
+  // ventana local: se etiqueta distinto para no leerse como un total autoritativo.
+  const usingLocalTotal = filters.month === 'all' || monthTotal === null
+  const totalAmount = usingLocalTotal ? loadedTotal : monthTotal
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -78,27 +92,27 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
         </div>
       )}
 
-      <div className="flex flex-col gap-1 pr-4 sm:pr-0 pl-4 sm:pl-0">
-        <span className="text-base font-semibold text-text-primary flex items-center gap-2">
-          {income.concept}
+      <div className="flex flex-col gap-1 pr-4 sm:pr-0 pl-4 sm:pl-0 min-w-0">
+        <span className="text-base font-semibold text-text-primary flex flex-wrap items-center gap-2 min-w-0">
+          <span className="user-text-clamp" title={income.concept}>{income.concept || 'Sin concepto'}</span>
           {income.desglose && income.desglose.length > 0 && (
-            <span className="text-[10px] bg-accent-app/20 text-accent-app px-2 py-0.5 rounded-full font-bold">DIVIDIDO</span>
+            <span className="text-xs bg-accent-app/20 text-accent-app px-2 py-0.5 rounded-full font-bold shrink-0">Dividido</span>
           )}
         </span>
-        <span className="text-xs text-text-secondary">{income.date}</span>
+        <span className="text-xs text-text-secondary">{formatDate(income.date)}</span>
       </div>
-      <div className="mt-3 sm:mt-0 flex items-center gap-4 sm:gap-6 justify-between sm:justify-end border-t sm:border-t-0 border-border-app/30 pt-3 sm:pt-0">
-        <div className="flex flex-col items-start sm:items-end text-left sm:text-right">
-          <span className="text-lg font-mono text-emerald-400 font-bold tracking-tight">
-            +{parseFloat(income.amount).toFixed(2)} {baseCurrency}
+      <div className="mt-3 sm:mt-0 flex items-center gap-4 sm:gap-6 justify-between sm:justify-end border-t sm:border-t-0 border-border-app/30 pt-3 sm:pt-0 shrink-0">
+        <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+          <span className="num text-lg font-mono text-positive font-bold tracking-tight max-w-full overflow-x-auto">
+            {formatMoney(income.amount, baseCurrency, { signed: true })}
           </span>
           {income.category && (
-            <span className="text-xs text-text-secondary bg-bg-app px-2 py-0.5 rounded-full mt-1">{income.category}</span>
+            <span className="user-text text-xs text-text-secondary bg-bg-app px-2 py-0.5 rounded-full mt-1 max-w-[14rem]">{income.category}</span>
           )}
           {income.divisa_original && income.divisa_original !== baseCurrency && (
-            <p className="text-[10px] text-text-secondary font-mono mt-1">
-              Original: {parseFloat(income.monto_original || income.amount).toFixed(2)} {income.divisa_original}
-              {!income.tasa_cambio && <span className="text-amber-400 ml-1">(Pendiente)</span>}
+            <p className="num text-xs text-text-secondary font-mono mt-1">
+              Original: {formatMoney(income.monto_original ?? income.amount, income.divisa_original)}
+              {!income.tasa_cambio && <span className="text-warning ml-1">(tasa pendiente)</span>}
             </p>
           )}
         </div>
@@ -122,8 +136,8 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
           <div className="flex items-center gap-3">
             <h2 className="heading">Ingresos</h2>
             {isSyncing && (
-              <span className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full font-mono animate-pulse">
-                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+              <span className="tag-warning animate-pulse">
+                <span className="w-2 h-2 bg-warning rounded-full"></span>
                 Sincronizando
               </span>
             )}
@@ -140,9 +154,18 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
         </button>
       </div>
 
+      {syncError && (
+        <p className="notice-warning" role="status">{syncError}</p>
+      )}
+
       {incomes.length === 0 ? (
-        <div className="card w-full py-16 text-center text-text-secondary text-sm">
-          Aún no hay ingresos registrados.
+        <div className="card w-full py-16 flex flex-col items-center gap-4 text-center">
+          <p className="text-sm text-text-secondary max-w-[45ch]">
+            Aún no hay ingresos registrados. Anotá el primero y el balance empieza a contar.
+          </p>
+          <button onClick={handleAddNew} className="btn-primary">
+            <span>+</span> Nuevo Ingreso
+          </button>
         </div>
       ) : (
         <div className="w-full flex flex-col gap-6">
@@ -159,21 +182,20 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
                   className="input !py-2 !w-auto cursor-pointer font-semibold capitalize"
                 >
                   <option value="all">Todos los meses</option>
-                  {availableMonths.map(m => {
-                    const [year, month] = m.split('-')
-                    const date = new Date(year, month - 1, 1)
-                    const name = date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })
-                    return <option key={m} value={m}>{name}</option>
-                  })}
+                  {availableMonths.map(m => (
+                    <option key={m} value={m}>{formatMonth(m)}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
             {/* RESUMEN DEL MES */}
             <div className="flex flex-col items-end border-t md:border-t-0 md:border-l border-border-app/30 pt-4 md:pt-0 pl-0 md:pl-6 w-full md:w-auto">
-              <span className="text-xs text-text-secondary font-semibold">Total Acumulado</span>
-              <span className="text-xl font-mono font-bold text-emerald-400">
-                +{totalAmount.toFixed(2)} {baseCurrency}
+              <span className="text-xs text-text-secondary font-semibold">
+                {usingLocalTotal ? 'Total de lo cargado' : 'Total del mes'}
+              </span>
+              <span className="num text-xl font-mono font-bold text-positive max-w-full overflow-x-auto">
+                {formatMoney(totalAmount, baseCurrency, { signed: true })}
               </span>
             </div>
           </div>
@@ -198,12 +220,13 @@ export default function IncomeList({ user, setView, handleEdit, handleAddNew }) 
             </div>
           )}
 
-          {filters.month === 'all' && (
+          {filters.month === 'all' && hasMore && (
             <button
               onClick={loadMore}
+              disabled={loadingMore}
               className="btn-secondary self-center mt-2"
             >
-              Cargar meses anteriores
+              {loadingMore ? 'Cargando…' : 'Cargar meses anteriores'}
             </button>
           )}
         </div>

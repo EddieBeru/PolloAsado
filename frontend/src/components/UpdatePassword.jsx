@@ -14,6 +14,7 @@ export default function UpdatePassword({ onDone, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return // doble submit
     setError(null)
 
     if (password.length < 6) {
@@ -62,7 +63,7 @@ export default function UpdatePassword({ onDone, onCancel }) {
 
         {done ? (
           <div className="flex flex-col gap-5">
-            <div className="text-sm text-emerald-400 font-medium bg-emerald-950/20 border border-emerald-900/50 rounded-xl p-4">
+            <div className="notice-positive">
               Tu contraseña se cambió correctamente.
             </div>
             <button onClick={onDone} className="btn-primary w-full">
@@ -82,6 +83,8 @@ export default function UpdatePassword({ onDone, onCancel }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                minLength={6}
+                autoComplete="new-password"
                 className="input"
               />
             </div>
@@ -97,12 +100,14 @@ export default function UpdatePassword({ onDone, onCancel }) {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
+                minLength={6}
+                autoComplete="new-password"
                 className="input"
               />
             </div>
 
             {error && (
-              <div className="text-sm text-rose-500 font-medium bg-rose-950/20 border border-rose-900/50 rounded-xl p-4">
+              <div className="notice-negative" role="alert">
                 {error}
               </div>
             )}

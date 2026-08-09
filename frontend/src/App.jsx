@@ -6,12 +6,21 @@ import Layout from './components/Layout'
 import './App.css'
 import DebtForm from './components/Debt/DebtForm'
 
+// Los únicos temas que el CSS define. Un valor guardado fuera de esta lista
+// (versión vieja, storage editado a mano) dejaría la app sin acento.
+const THEMES = ['slate', 'emerald', 'sky', 'amber', 'rose']
+const DEFAULT_THEME = 'slate'
+
 function App() {
   const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pollo_asado_theme') || 'slate'
+    try {
+      const saved = localStorage.getItem('pollo_asado_theme')
+      if (saved && THEMES.includes(saved)) return saved
+    } catch (err) {
+      // Safari en modo privado lanza al tocar localStorage.
+      console.warn('No se pudo leer el tema guardado:', err)
     }
-    return 'slate'
+    return DEFAULT_THEME
   })
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -21,18 +30,31 @@ function App() {
 
   // Apply theme dynamically to the body and documentElement
   useEffect(() => {
-    document.body.setAttribute('data-theme', theme)
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('pollo_asado_theme', theme)
+    const safeTheme = THEMES.includes(theme) ? theme : DEFAULT_THEME
+    document.body.setAttribute('data-theme', safeTheme)
+    document.documentElement.setAttribute('data-theme', safeTheme)
+    try {
+      localStorage.setItem('pollo_asado_theme', safeTheme)
+    } catch (err) {
+      console.warn('No se pudo guardar el tema:', err)
+    }
   }, [theme])
 
   // Monitor Supabase Authentication state
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session)
+        setLoading(false)
+      })
+      // Sin este catch, un fallo al leer la sesión deja la pantalla de carga
+      // girando para siempre. Preferimos caer al login.
+      .catch((err) => {
+        console.error('No se pudo leer la sesión:', err)
+        setSession(null)
+        setLoading(false)
+      })
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
@@ -47,7 +69,13 @@ function App() {
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      // Sin red, signOut falla pero la sesión local ya no sirve: la soltamos.
+      console.error('Error al cerrar sesión:', err)
+      setSession(null)
+    }
   }
 
   if (loading) {
