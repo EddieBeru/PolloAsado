@@ -21,7 +21,7 @@ import { toNumber } from "../../lib/format";
         const nextErrors = {}
         const monto = toNumber(formData.amount, NaN)
         if (!Number.isFinite(monto) || monto <= 0) {
-            nextErrors.amount = 'Escribí el monto de la deuda (mayor que cero).'
+            nextErrors.amount = 'Escribí cuánto debés (mayor que cero).'
         }
         if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.due_date)) {
             nextErrors.due_date = 'Elegí la fecha límite de pago.'
@@ -36,9 +36,9 @@ import { toNumber } from "../../lib/format";
     
     <div className="w-full card">
       <div className="flex flex-col gap-1 mb-4">
-        <h2 className="heading">Control Analítico de Deuda</h2>
+        <h2 className="heading">Simulador de deuda</h2>
         <p className="text-xs text-text-secondary">
-          Registra el saldo que posees de forma informativa para simular y proyectar tu progreso de pagos.
+          Anotá cuánto debés y para cuándo, y te decimos de cuánto sale la cuota mensual. Esto no se guarda todavía.
         </p>
       </div>
       
@@ -47,14 +47,14 @@ import { toNumber } from "../../lib/format";
         {/* COMPONENTE PARA EL PUNTO 1: VALOR DE LA DEUDA */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold text-text-secondary">
-            Cantidad que posee la deuda (Monto Informativo):
+            ¿Cuánto debés?
           </label>
           <input 
             type="number"              // Solo permite ingresar dígitos numéricos
             name="amount"              // Nombre de la variable en el useState
             value={formData.amount}    // Enlace directo con el valor del estado
             onChange={handleChange}    // Función que lee los números al ser digitados
-            placeholder="Ej: 75000"    // Texto de ejemplo en el fondo de la caja
+            placeholder="Ej. 75000"    // Texto de ejemplo en el fondo de la caja
             min="0"
             step="0.01"
             inputMode="decimal"
@@ -67,7 +67,7 @@ import { toNumber } from "../../lib/format";
         {/* COMPONENTE PARA EL PUNTO 2: LAPSO DE TIEMPO / FECHA LÍMITE */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold text-text-secondary">
-            Fecha límite de pago (Lapso para análisis):
+            ¿Para cuándo tenés que pagarla?
           </label>
           <input 
             type="date"                // Despliega un calendario nativo en la pantalla
@@ -89,7 +89,7 @@ import { toNumber } from "../../lib/format";
           
           {/* Botón que procesa los datos y simula el registro de la deuda */}
           <button type="submit" className="btn-primary">
-            Registrar Deuda
+            Calcular cuota
           </button>
         </div>
 

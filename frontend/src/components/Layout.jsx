@@ -165,7 +165,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             className="btn-secondary w-full"
           >
             <LogOut className="w-5 h-5" />
-            <span>Cerrar Sesión</span>
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </aside>
@@ -184,7 +184,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
           ) : activeTab === 'debts' ? (
             <div className="flex flex-col gap-6">
               <p className="notice-warning" role="status">
-                Deudas está en vista previa: los datos alimentan el análisis en pantalla, pero todavía no se guardan.
+                Deudas es una vista previa: lo que escribás alimenta el cálculo en pantalla, pero no se guarda. Al recargar se pierde.
               </p>
               {/* 🛠️ USANDO LAS FUNCIONES DE REFERENCIA FIJA */}
               <DebtForm
@@ -206,7 +206,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
                   {activeTabName}
                 </h2>
                 <p className="text-text-secondary">
-                  Contenido vacío.
+                  Esta sección todavía no está hecha. Por ahora podés usar Ingresos y Gastos.
                 </p>
               </div>
             </div>

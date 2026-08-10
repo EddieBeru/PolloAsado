@@ -31,18 +31,18 @@ export default function DebtAnalysis({ amount, due_date, ingresoMensual }) {
     <div className="w-full card flex flex-col gap-4">
 
       <div className="flex flex-col gap-1">
-        <h3 className="heading">Análisis de tu Deuda</h3>
+        <h3 className="heading">Tu cuota</h3>
         <p className="text-xs text-text-secondary">
           {tieneIngreso
-            ? <>Calculado sobre un ingreso mensual supuesto de <strong className="num">{formatMoney(ingreso, baseCurrency)}</strong>.</>
-            : 'Todavía no hay un ingreso mensual con el que comparar la cuota.'}
+            ? <>Calculado sobre un ingreso mensual de ejemplo de <strong className="num">{formatMoney(ingreso, baseCurrency)}</strong>.</>
+            : 'Falta el ingreso mensual con el que comparar la cuota.'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
         <div className="well flex flex-col gap-1">
-          <span className="text-xs text-text-secondary">Número de cuotas</span>
+          <span className="text-xs text-text-secondary">Cuotas</span>
           <span className="num text-2xl font-bold text-text-primary">{meses}</span>
           <span className="text-xs text-text-secondary">meses hasta la fecha límite</span>
         </div>

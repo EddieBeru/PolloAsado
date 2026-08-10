@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import localforage from 'localforage'
 import { fetchBalance } from '../lib/stats'
-import { computePendingDelta } from '../lib/balance'
+import { computePendingSplit } from '../lib/balance'
+import { today as todayStr } from '../lib/period'
+import { toNumber } from '../lib/format'
 
 // Cache del baseline del servidor (offline-first).
 const balanceStore = localforage.createInstance({
@@ -10,7 +12,6 @@ const balanceStore = localforage.createInstance({
 })
 
 const BASELINE_KEY = 'baseline_v1'
-const todayStr = () => new Date().toISOString().split('T')[0]
 
 /**
  * Balance "delta preciso": baseline del servidor + aporte de items pendientes.
@@ -68,7 +69,7 @@ export function useBalance(user, incomes = [], outcomes = []) {
         setStale(false)
         setError(
           navigator.onLine
-            ? 'No se pudo calcular tu balance.'
+            ? 'No se pudo calcular tu saldo.'
             : 'Sin conexión y sin datos guardados en este dispositivo.'
         )
       }
@@ -82,7 +83,7 @@ export function useBalance(user, incomes = [], outcomes = []) {
       console.error('Fallo inesperado al refrescar el balance:', err)
       setLoading(false)
       setRefreshing(false)
-      setError('No se pudo calcular tu balance.')
+      setError('No se pudo calcular tu saldo.')
     })
   }, [refresh])
 
@@ -94,11 +95,25 @@ export function useBalance(user, incomes = [], outcomes = []) {
     return () => window.removeEventListener('online', onOnline)
   }, [refresh])
 
-  // balance = baseline del servidor + delta de pendientes locales (fecha <= hoy).
-  const balance = useMemo(() => {
-    const base = baseline?.balance ?? 0
-    return base + computePendingDelta(incomes, outcomes, todayStr())
+  // Totales acumulados = baseline del servidor + pendientes locales (fecha <= hoy),
+  // repartidos por lado para que el desglose de la UI cuadre con el balance:
+  // totalIngresos - totalGastos === balance, siempre.
+  const totals = useMemo(() => {
+    const pending = computePendingSplit(incomes, outcomes, { to: todayStr() })
+    const ingresos = toNumber(baseline?.totalIngresos) + pending.ingresos
+    const gastos = toNumber(baseline?.totalGastos) + pending.gastos
+    return { ingresos, gastos, balance: ingresos - gastos }
   }, [baseline, incomes, outcomes])
 
-  return { balance, baseline, loading, stale, error, refreshing, refresh }
+  return {
+    balance: totals.balance,
+    totalIngresos: totals.ingresos,
+    totalGastos: totals.gastos,
+    baseline,
+    loading,
+    stale,
+    error,
+    refreshing,
+    refresh,
+  }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { authErrorMessage } from '../lib/authErrors'
 import pollo from '../assets/pollo.svg'
 
 // Pantalla de cambio de contraseña (flujo de recuperación de Supabase).
@@ -18,7 +19,7 @@ export default function UpdatePassword({ onDone, onCancel }) {
     setError(null)
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
+      setError('La contraseña necesita al menos 6 caracteres.')
       return
     }
     if (password !== confirm) {
@@ -32,7 +33,7 @@ export default function UpdatePassword({ onDone, onCancel }) {
       if (updateError) throw updateError
       setDone(true)
     } catch (err) {
-      setError(err.message || 'No se pudo cambiar la contraseña.')
+      setError(authErrorMessage(err, 'No se pudo cambiar la contraseña. Intentá de nuevo.'))
     } finally {
       setLoading(false)
     }
@@ -47,8 +48,8 @@ export default function UpdatePassword({ onDone, onCancel }) {
         <div className='text-center'>
           <h1 className='font-bold text-xl'>Cambio de contraseña</h1>
           <h3 className='font-light text-sm mt-2'>
-            Elige una nueva contraseña para tu cuenta.<br />
-            Después de guardarla podrás seguir usando PolloAsado con normalidad.
+            Elegí una contraseña nueva.<br />
+            Al guardarla seguís usando PolloAsado con la misma cuenta.
           </h3>
         </div>
       </div>
@@ -56,15 +57,15 @@ export default function UpdatePassword({ onDone, onCancel }) {
       <div className="w-full max-w-md card flex flex-col gap-8 my-auto shadow-2xl shadow-bg-app">
         <div className="flex flex-col gap-2 text-center">
           <h2 className="heading">Nueva contraseña</h2>
-          <p className="text-sm text-text-secondary">
-            {done ? 'Contraseña actualizada' : 'Ingresa tu nueva contraseña'}
-          </p>
+          {done && (
+            <p className="text-sm text-text-secondary">Contraseña actualizada</p>
+          )}
         </div>
 
         {done ? (
           <div className="flex flex-col gap-5">
             <div className="notice-positive">
-              Tu contraseña se cambió correctamente.
+              Listo, tu contraseña cambió.
             </div>
             <button onClick={onDone} className="btn-primary w-full">
               Continuar
@@ -113,7 +114,7 @@ export default function UpdatePassword({ onDone, onCancel }) {
             )}
 
             <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
-              {loading ? 'Guardando...' : 'Guardar contraseña'}
+              {loading ? 'Guardando…' : 'Guardar contraseña'}
             </button>
 
             {onCancel && (

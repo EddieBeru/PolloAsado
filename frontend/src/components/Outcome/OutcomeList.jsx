@@ -106,8 +106,9 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
     const renderOutcomeItem = (outcome) => (
         <div key={outcome.id} className="bg-surface-app rounded-2xl border border-border-app/50 p-4 md:p-5 hover:-translate-y-0.5 hover:shadow-lg hover:border-accent-app/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between group relative">
             {outcome._isPendingSync && (
-                <div className="absolute top-3 left-3 flex items-center justify-center" title="Pendiente de sincronizar">
-                    <span className="w-2.5 h-2.5 rounded-full border-2 border-text-secondary bg-transparent"></span>
+                <div className="absolute top-3 left-3 flex items-center justify-center" title="Pendiente de subir">
+                    <span className="w-2.5 h-2.5 rounded-full border-2 border-text-secondary bg-transparent" aria-hidden="true"></span>
+                    <span className="sr-only">Pendiente de subir</span>
                 </div>
             )}
 
@@ -115,7 +116,7 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
                 <span className="text-base font-semibold text-text-primary flex flex-wrap items-center gap-2 min-w-0">
                     <span className="user-text-clamp" title={outcome.concept}>{outcome.concept || 'Sin concepto'}</span>
                     {outcome.desglose && outcome.desglose.length > 0 && (
-                        <span className="text-xs bg-accent-app/20 text-accent-app px-2 py-0.5 rounded-full font-bold shrink-0">Dividido</span>
+                        <span className="text-xs bg-accent-app/20 text-accent-app px-2 py-0.5 rounded-full font-bold shrink-0">Con desglose</span>
                     )}
                 </span>
                 <span className="text-xs text-text-secondary">{formatDate(outcome.date)}</span>
@@ -130,7 +131,7 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
                     )}
                     {outcome.divisa_original && outcome.divisa_original !== baseCurrency && (
                         <p className="num text-xs text-text-secondary font-mono mt-1">
-                            Original: {formatMoney(outcome.monto_original ?? outcome.amount, outcome.divisa_original)}
+                            En moneda original: {formatMoney(outcome.monto_original ?? outcome.amount, outcome.divisa_original)}
                             {!outcome.tasa_cambio && <span className="text-warning ml-1">(tasa pendiente)</span>}
                         </p>
                     )}
@@ -139,7 +140,8 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
                 <button
                     onClick={() => handleEdit(outcome)}
                     className="btn-icon"
-                    title="Editar Gasto"
+                    title="Editar gasto"
+                    aria-label={`Editar ${outcome.concept || 'gasto sin concepto'}`}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                 </button>
@@ -161,15 +163,12 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-text-secondary">
-                        Historial de salidas de dinero.
-                    </p>
                 </div>
                 <button
                     onClick={handleAddNew}
                     className="btn-primary"
                 >
-                    <span>+</span> Nuevo Gasto
+                    <span>+</span> Nuevo gasto
                 </button>
             </div>
 
@@ -180,10 +179,10 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
             {outcomes.length === 0 ? (
                 <div className="card w-full py-16 flex flex-col items-center gap-4 text-center">
                     <p className="text-sm text-text-secondary max-w-[45ch]">
-                        Aún no hay gastos registrados. Anotá el primero para ver a dónde se va la plata.
+Todavía no hay gastos. Anotá el primero para ver en qué se te va la plata.
                     </p>
                     <button onClick={handleAddNew} className="btn-primary">
-                        <span>+</span> Nuevo Gasto
+                        <span>+</span> Nuevo gasto
                     </button>
                 </div>
             ) : (
@@ -211,7 +210,7 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
                         {/* RESUMEN DEL MES */}
                         <div className="flex flex-col items-end border-t md:border-t-0 md:border-l border-border-app/30 pt-4 md:pt-0 pl-0 md:pl-6 w-full md:w-auto">
                             <span className="text-xs text-text-secondary font-semibold">
-                                {usingLocalTotal ? 'Total de lo cargado' : 'Total del mes'}
+                                {usingLocalTotal ? 'Suma de lo que se ve' : 'Total del mes'}
                             </span>
                             <span className="num text-xl font-mono font-bold text-negative max-w-full overflow-x-auto">
                                 −{formatMoney(totalAmount, baseCurrency, { absolute: true })}
@@ -221,13 +220,13 @@ export default function OutcomeList({ user, setView, handleEdit, handleAddNew })
 
                     {futureOutcomes.length === 0 && pastOutcomes.length === 0 && (
                         <div className="card w-full py-16 text-center text-text-secondary text-sm">
-                            No hay gastos que coincidan con estos filtros.
+                            Ningún gasto en este mes.
                         </div>
                     )}
 
                     {futureOutcomes.length > 0 && (
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-lg font-bold text-text-primary ml-1">Proyecciones</h3>
+                            <h3 className="text-lg font-bold text-text-primary ml-1">Próximos</h3>
                             {futureOutcomes.map(renderOutcomeItem)}
                         </div>
                     )}

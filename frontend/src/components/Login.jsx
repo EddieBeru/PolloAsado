@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { authErrorMessage } from '../lib/authErrors'
 import { Palette } from 'lucide-react'
 import pollo from '../assets/pollo.svg'
 
@@ -39,27 +40,30 @@ export default function Login({ theme, setTheme }) {
         if (signUpError) throw signUpError
 
         if (data?.user && data.user.identities?.length === 0) {
-          setSuccessMessage('El correo ya está registrado. Intenta iniciar sesión.')
+          setSuccessMessage('Ese correo ya tiene cuenta. Iniciá sesión.')
         } else {
-          setSuccessMessage('Registro exitoso. Si es necesario, verifica tu correo o inicia sesión.')
+          setSuccessMessage('Cuenta creada. Si te pedimos confirmar el correo, buscá el mensaje que te enviamos.')
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) throw signInError
       }
     } catch (err) {
-      setError(err.message || 'Ocurrió un error inesperado.')
+      setError(authErrorMessage(
+        err,
+        isSignUp ? 'No se pudo crear la cuenta. Intentá de nuevo.' : 'No se pudo iniciar sesión. Intentá de nuevo.'
+      ))
     } finally {
       setLoading(false)
     }
   }
 
-  // Enviar enlace mágico (inicio de sesión sin contraseña).
+  // Enviar enlace de acceso por correo (inicio de sesión sin contraseña).
   const handleMagicLink = async () => {
     setError(null)
     setSuccessMessage('')
     if (!email) {
-      setError('Ingresa tu correo primero.')
+      setError('Escribí tu correo primero.')
       return
     }
     setLoading(true)
@@ -69,9 +73,9 @@ export default function Login({ theme, setTheme }) {
         options: { emailRedirectTo: window.location.origin, shouldCreateUser: false }
       })
       if (otpError) throw otpError
-      setSuccessMessage('Te enviamos un enlace mágico. Revisa tu correo para entrar.')
+      setSuccessMessage(`Te enviamos un enlace a ${email}. Abrilo desde este dispositivo para entrar.`)
     } catch (err) {
-      setError(err.message || 'No se pudo enviar el enlace mágico.')
+      setError(authErrorMessage(err, 'No se pudo enviar el enlace. Intentá de nuevo.'))
     } finally {
       setLoading(false)
     }
@@ -82,7 +86,7 @@ export default function Login({ theme, setTheme }) {
     setError(null)
     setSuccessMessage('')
     if (!email) {
-      setError('Ingresa tu correo primero.')
+      setError('Escribí tu correo primero.')
       return
     }
     setLoading(true)
@@ -91,9 +95,9 @@ export default function Login({ theme, setTheme }) {
         redirectTo: window.location.origin
       })
       if (resetError) throw resetError
-      setSuccessMessage('Te enviamos un enlace para cambiar tu contraseña. Revisa tu correo.')
+      setSuccessMessage(`Te enviamos un enlace a ${email} para cambiar tu contraseña.`)
     } catch (err) {
-      setError(err.message || 'No se pudo enviar el enlace de cambio de contraseña.')
+      setError(authErrorMessage(err, 'No se pudo enviar el enlace. Intentá de nuevo.'))
     } finally {
       setLoading(false)
     }
@@ -106,13 +110,13 @@ export default function Login({ theme, setTheme }) {
           <img src={pollo} className='size-30 relative drop-shadow-xl' alt="PolloAsado Logo" />
         </div>
         <div className='text-center'>
-          <h1 className='font-bold text-xl'>¡Bienvenid@ a PolloAsado!</h1>
+          <h1 className='font-bold text-xl'>PolloAsado</h1>
           <h2 className='font-semibold text-35 -mt-1'>Que el nombre no te confunda.</h2>
           <h3 className='font-light text-sm mt-2'>
-            Te damos la bienvenida a tu plataforma de manejo de finanzas favorita.<br />
-            Te ayudamos a entender qué ocurre con tu dinero y te damos consejos para que cada colón dure más.
+            Anotá lo que entra y lo que sale, con el detalle de cada movimiento,
+            y mirá en qué se te va la plata.
           </h3>
-          <p className='font-light text-text-secondary text-sm mt-8'>Proyecto desarrollado por un par de estudiantes entusiastas.</p>
+          <p className='font-light text-text-secondary text-sm mt-8'>Un proyecto de un par de estudiantes.</p>
         </div>
       </div>
 
@@ -124,8 +128,8 @@ export default function Login({ theme, setTheme }) {
               type="button"
               onClick={() => setShowThemes((s) => !s)}
               className="btn-icon"
-              title="Cambiar paleta de color"
-              aria-label="Cambiar paleta de color"
+              title="Cambiar el color de la app"
+              aria-label="Cambiar el color de la app"
               aria-expanded={showThemes}
             >
               <Palette className="w-4 h-4" />
@@ -149,9 +153,6 @@ export default function Login({ theme, setTheme }) {
         <div className="flex flex-col items-center gap-2 text-center">
           <img src={pollo} className="size-12 lg:hidden" alt="PolloAsado Logo" />
           <h2 className="heading">PolloAsado</h2>
-          <p className="text-sm text-text-secondary">
-            {isSignUp ? 'Crea una cuenta' : 'Ingresa tus credenciales'}
-          </p>
         </div>
 
         <div className="flex bg-bg-app rounded-2xl p-1">
@@ -160,14 +161,14 @@ export default function Login({ theme, setTheme }) {
             onClick={() => { setIsSignUp(false); setError(null); setSuccessMessage('') }}
             className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${!isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'}`}
           >
-            Iniciar Sesión
+            Iniciar sesión
           </button>
           <button
             type="button"
             onClick={() => { setIsSignUp(true); setError(null); setSuccessMessage('') }}
             className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer ${isSignUp ? 'bg-surface-app shadow-sm text-accent-app' : 'text-text-secondary hover:text-text-primary'}`}
           >
-            Registrarse
+            Crear cuenta
           </button>
         </div>
 
@@ -193,7 +194,7 @@ export default function Login({ theme, setTheme }) {
 
           <div className="flex flex-col gap-2">
             <label htmlFor="email-input" className="text-sm font-semibold text-text-primary ml-1">
-              Correo Electrónico
+              Correo
             </label>
             <input
               id="email-input"
@@ -238,7 +239,9 @@ export default function Login({ theme, setTheme }) {
           )}
 
           <button type="submit" disabled={loading} className="btn-primary w-full mt-1">
-            {loading ? 'Procesando...' : isSignUp ? 'Registrarse' : 'Ingresar'}
+            {loading
+              ? (isSignUp ? 'Creando la cuenta…' : 'Entrando…')
+              : (isSignUp ? 'Crear cuenta' : 'Iniciar sesión')}
           </button>
 
           {!isSignUp && (
@@ -249,7 +252,7 @@ export default function Login({ theme, setTheme }) {
                 disabled={loading}
                 className="text-accent-app hover:opacity-80 font-semibold cursor-pointer disabled:opacity-50"
               >
-                Enlace mágico
+                Entrar con un enlace por correo
               </button>
               <span className="text-border-app">·</span>
               <button
@@ -258,7 +261,7 @@ export default function Login({ theme, setTheme }) {
                 disabled={loading}
                 className="text-text-secondary hover:text-text-primary cursor-pointer disabled:opacity-50"
               >
-                ¿Olvidaste tu contraseña?
+                Olvidé mi contraseña
               </button>
             </div>
           )}

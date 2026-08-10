@@ -37,7 +37,7 @@ export default function Settings({ user, onLogout }) {
   const handleForceSync = () => {
     setActionError(null)
     if (!navigator.onLine) {
-      setActionError('Sin conexión. Tus cambios se subirán solos cuando vuelva la señal.')
+      setActionError('Sin conexión. Tus cambios se suben solos cuando vuelva la señal.')
       return
     }
     setBusy(true)
@@ -46,9 +46,9 @@ export default function Settings({ user, onLogout }) {
 
   const handleClearLocalData = async () => {
     const confirmed = window.confirm(
-      'Se borrará la copia local de ingresos, gastos y balance de este dispositivo.\n\n' +
+      'Se borra la copia de ingresos, gastos y saldo guardada en este dispositivo.\n\n' +
       'Lo que ya se sincronizó se vuelve a descargar. Lo que esté pendiente de subir se pierde.\n\n' +
-      '¿Continuar?'
+      '¿Borrar de todos modos?'
     )
     if (!confirmed) return
 
@@ -63,7 +63,7 @@ export default function Settings({ user, onLogout }) {
       window.location.reload()
     } catch (err) {
       console.error('No se pudo borrar la caché local:', err)
-      setActionError('No se pudo borrar la caché local en este dispositivo.')
+      setActionError('No se pudieron borrar los datos de este dispositivo. Intentá de nuevo.')
       setBusy(false)
     }
   }
@@ -99,7 +99,7 @@ export default function Settings({ user, onLogout }) {
     if (!code) return
     // Un código inválido rompe el formateo de montos en toda la app.
     if (!/^[A-Z]{3}$/.test(code)) {
-      setActionError('El código de divisa son 3 letras, por ejemplo USD o EUR.')
+      setActionError('El código de divisa son 3 letras. Ejemplo: USD, EUR.')
       return
     }
     if (settings.divisas_activas.includes(code)) {
@@ -130,12 +130,7 @@ export default function Settings({ user, onLogout }) {
     <div className="w-full flex-1 flex flex-col gap-8">
 
       {/* HEADER */}
-      <div className="flex flex-col gap-2">
-        <h2 className="heading">Ajustes</h2>
-        <p className="text-sm text-text-secondary">
-          Configuración de cuenta, almacenamiento local y sincronización.
-        </p>
-      </div>
+      <h2 className="heading">Ajustes</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
@@ -146,18 +141,14 @@ export default function Settings({ user, onLogout }) {
           <div className="card flex flex-col gap-5">
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Cuenta</h3>
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold text-text-secondary">Correo Electrónico</span>
+              <span className="text-sm font-semibold text-text-secondary">Correo</span>
               <span className="user-text text-sm font-mono text-text-primary">{user?.email || 'Sin correo asociado'}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold text-text-secondary">Suscripción</span>
-              <span className="text-sm font-semibold text-positive">Activa (Plan Gratuito)</span>
             </div>
             <button
               onClick={onLogout}
               className="btn-danger mt-2"
             >
-              Cerrar Sesión
+              Cerrar sesión
             </button>
           </div>
 
@@ -169,7 +160,7 @@ export default function Settings({ user, onLogout }) {
             </h3>
 
             <p className="text-sm text-text-secondary leading-relaxed">
-              PolloAsado opera bajo una arquitectura <strong>Local-First</strong>. Tus transacciones se guardan instantáneamente en tu dispositivo y se sincronizan con la nube en segundo plano para máxima velocidad.
+              Lo que anotás se guarda primero en este dispositivo y se sube a la nube en segundo plano. Podés registrar movimientos sin conexión.
             </p>
 
             <div className="flex items-center gap-3 bg-surface-app/50 rounded-xl border border-border-app/30 p-4">
@@ -191,14 +182,14 @@ export default function Settings({ user, onLogout }) {
                 disabled={busy}
                 className="btn-secondary flex-1"
               >
-                {busy ? 'Recargando…' : 'Forzar Sync'}
+                {busy ? 'Sincronizando…' : 'Volver a sincronizar'}
               </button>
               <button
                 onClick={handleClearLocalData}
                 disabled={busy}
                 className="btn-danger flex-1"
               >
-                Borrar Caché
+                Borrar datos de este dispositivo
               </button>
             </div>
           </div>
@@ -210,7 +201,9 @@ export default function Settings({ user, onLogout }) {
           {/* PANEL DE GESTIÓN DE CATEGORÍAS */}
           <div className="card flex flex-col gap-5">
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Categorías</h3>
-            <p className="text-sm text-text-secondary">Personaliza las categorías disponibles al registrar ingresos y gastos.</p>
+            <p className="notice-warning" role="status">
+              Vista previa: los cambios de esta lista todavía no llegan a los formularios de ingresos y gastos.
+            </p>
 
             <form onSubmit={handleAddCategory} className="flex gap-2">
               <select
@@ -225,11 +218,11 @@ export default function Settings({ user, onLogout }) {
                 type="text"
                 value={newCat}
                 onChange={(e) => setNewCat(e.target.value)}
-                placeholder="Nueva categoría..."
+                placeholder="Nueva categoría"
                 maxLength={40}
                 className="input flex-1"
               />
-              <button type="submit" className="btn-primary px-4 aspect-square">+</button>
+              <button type="submit" className="btn-primary px-4 aspect-square" aria-label="Agregar categoría">+</button>
             </form>
 
             <div className="flex flex-col gap-6 mt-2">
@@ -239,7 +232,7 @@ export default function Settings({ user, onLogout }) {
                   {categories.ingreso.map(cat => (
                     <span key={`ing-${cat}`} className="user-text bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 max-w-full">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('ingreso', cat)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCategory('ingreso', cat)} aria-label={`Quitar ${cat}`} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
@@ -251,7 +244,7 @@ export default function Settings({ user, onLogout }) {
                   {categories.gasto.map(cat => (
                     <span key={`gas-${cat}`} className="user-text bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 max-w-full">
                       {cat}
-                      <button onClick={() => handleRemoveCategory('gasto', cat)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCategory('gasto', cat)} aria-label={`Quitar ${cat}`} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     </span>
                   ))}
                 </div>
@@ -264,7 +257,7 @@ export default function Settings({ user, onLogout }) {
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Divisas</h3>
 
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-text-secondary">Divisa Principal (Base)</label>
+              <label className="text-sm font-semibold text-text-secondary">Divisa principal</label>
               <select
                 value={settings.divisa_principal}
                 onChange={(e) => updateSettings({ divisa_principal: e.target.value })}
@@ -274,28 +267,28 @@ export default function Settings({ user, onLogout }) {
                   <option key={cur} value={cur}>{cur}</option>
                 ))}
               </select>
-              <p className="text-xs text-text-secondary">Todos tus reportes se mostrarán en esta moneda.</p>
+              <p className="text-xs text-text-secondary">Los saldos y totales se muestran en esta divisa.</p>
             </div>
 
             <div className="flex flex-col gap-2 mt-4">
-              <label className="text-sm font-semibold text-text-secondary">Monedas Disponibles</label>
+              <label className="text-sm font-semibold text-text-secondary">Otras divisas</label>
               <form onSubmit={handleAddCurrency} className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={newCurrency}
                   onChange={(e) => setNewCurrency(e.target.value.toUpperCase())}
-                  placeholder="Ej. EUR, MXN, COP..."
+                  placeholder="Ej. USD"
                   maxLength="3"
                   className="input flex-1 uppercase"
                 />
-                <button type="submit" className="btn-primary px-4 aspect-square">+</button>
+                <button type="submit" className="btn-primary px-4 aspect-square" aria-label="Agregar divisa">+</button>
               </form>
               <div className="flex flex-wrap gap-2">
                 {settings.divisas_activas.map(cur => (
                   <span key={cur} className="bg-bg-app border border-border-app/50 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 font-mono">
                     {cur}
                     {cur !== settings.divisa_principal && (
-                      <button onClick={() => handleRemoveCurrency(cur)} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
+                      <button onClick={() => handleRemoveCurrency(cur)} aria-label={`Quitar ${cur}`} className="text-text-secondary hover:text-negative font-bold px-1 rounded-full">×</button>
                     )}
                   </span>
                 ))}
