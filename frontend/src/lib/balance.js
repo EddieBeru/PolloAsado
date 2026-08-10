@@ -12,21 +12,53 @@
 
 const n = (v) => parseFloat(v ?? 0) || 0
 
-function sumPendingDelta(items, today) {
+/**
+ * Suma de deltas pendientes dentro de un rango.
+ *
+ * Un item sin fecha se cuenta cuando el rango es abierto por la izquierda
+ * (el acumulado), pero no cuando hay un `from`: sin fecha no se puede ubicar
+ * dentro de un mes concreto y contarlo ahí sería inventar el dato.
+ */
+function sumPendingDelta(items, { from = null, to = null } = {}) {
   return items.reduce((acc, item) => {
     if (!item._isPendingSync) return acc
-    if (item.date && item.date > today) return acc // excluye proyecciones futuras
+    if (item.date) {
+      if (to && item.date > to) return acc // excluye proyecciones futuras
+      if (from && item.date < from) return acc
+    } else if (from) {
+      return acc
+    }
     return acc + (n(item.amount) - n(item._deltaBase))
   }, 0)
 }
 
 /**
- * Aporte neto de los items pendientes al balance.
+ * Aporte de los items pendientes, separado por lado.
+ *
+ * El desglose de la UI se apoya en esto: los totales del servidor no conocen
+ * los pendientes, así que sin este reparto "Ingresos - Gastos" no cuadraría
+ * con el balance que se muestra arriba.
+ *
  * @param {Array} incomes  ingresos locales (con amount, date, _isPendingSync, _deltaBase)
+ * @param {Array} outcomes gastos locales
+ * @param {{from?: string|null, to?: string|null}} range  fechas 'YYYY-MM-DD'
+ * @returns {{ ingresos: number, gastos: number }}
+ */
+export function computePendingSplit(incomes = [], outcomes = [], range = {}) {
+  return {
+    ingresos: sumPendingDelta(incomes, range),
+    gastos: sumPendingDelta(outcomes, range),
+  }
+}
+
+/**
+ * Aporte neto de los items pendientes al balance.
+ * @param {Array} incomes  ingresos locales
  * @param {Array} outcomes gastos locales
  * @param {string} today    fecha 'YYYY-MM-DD'
  * @returns {number}
  */
 export function computePendingDelta(incomes = [], outcomes = [], today) {
-  return sumPendingDelta(incomes, today) - sumPendingDelta(outcomes, today)
+  const { ingresos, gastos } = computePendingSplit(incomes, outcomes, { to: today })
+  return ingresos - gastos
 }

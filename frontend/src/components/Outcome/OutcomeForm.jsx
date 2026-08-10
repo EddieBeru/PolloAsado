@@ -97,10 +97,10 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
             const cached = getCachedRate(from, to)
             if (cached) {
                 setFormData((prev) => ({ ...prev, tasa_cambio: cached.toString() }))
-                setRateError('Modo sin conexión: Usando última tasa conocida.')
+                setRateError('Sin conexión: usamos la última tasa guardada.')
             } else {
                 setFormData((prev) => ({ ...prev, tasa_cambio: '' }))
-                setRateError('Sin conexión. La tasa se calculará al sincronizar.')
+                setRateError('Sin conexión: la tasa se calcula al sincronizar.')
             }
             return
         }
@@ -130,10 +130,10 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
             const cached = getCachedRate(from, to)
             if (cached) {
                 setFormData((prev) => ({ ...prev, tasa_cambio: cached.toString() }))
-                setRateError('Fallo de red. Usando tasa cacheada.')
+                setRateError('Falló la red: usamos la última tasa guardada.')
             } else {
                 setFormData((prev) => ({ ...prev, tasa_cambio: '' }))
-                setRateError('Error al obtener la tasa. Se calculará después.')
+                setRateError('No se pudo traer la tasa: se calcula al sincronizar.')
             }
         } finally {
             setIsFetchingRate(false)
@@ -252,11 +252,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex flex-col gap-2">
                     <h2 className="heading">
-                        {isEditing ? 'Editar Gasto' : 'Registrar Gasto'}
+                        {isEditing ? 'Editar gasto' : 'Nuevo gasto'}
                     </h2>
-                    <p className="text-sm text-text-secondary">
-                        {isEditing ? 'Modifica los detalles de esta entrada.' : 'Añade una nueva entrada financiera al sistema.'}
-                    </p>
                 </div>
                 <button
                     type="button"
@@ -273,7 +270,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
 
                     {/* Card 1: Información Básica */}
                     <div className="card flex flex-col gap-6 w-full transition-all duration-500">
-                        <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Detalles Principales</h3>
+                        <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Detalles</h3>
 
                         <div className="flex flex-col gap-2">
                             <label htmlFor="concept" className="text-sm font-semibold text-text-secondary ml-1">Concepto *</label>
@@ -296,7 +293,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label htmlFor="amount" className="text-sm font-semibold text-text-secondary ml-1">Monto {formData.divisa_original !== baseCurrency ? '(Moneda Original)' : ''} *</label>
+                            <label htmlFor="amount" className="text-sm font-semibold text-text-secondary ml-1">Monto {formData.divisa_original !== baseCurrency ? `(en ${formData.divisa_original})` : ''} *</label>
                             <div className="relative flex">
                                 <input
                                     type="number"
@@ -335,10 +332,10 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                     <div className="flex items-center gap-2">
                                         <span className={rateError ? 'text-warning' : 'text-text-secondary'}>
                                             {isFetchingRate
-                                                ? 'Calculando tasa...'
+                                                ? 'Buscando la tasa…'
                                                 : formData.tasa_cambio
                                                     ? `1 ${formData.divisa_original} = ${formData.tasa_cambio} ${baseCurrency}`
-                                                    : rateError || 'Auto-cálculo pendiente'}
+                                                    : rateError || 'La tasa se calcula al sincronizar'}
                                         </span>
                                         {!formData.tasa_cambio && !isFetchingRate && (
                                             <button
@@ -387,7 +384,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 className="input cursor-pointer"
                                 required
                             >
-                                <option value="">Seleccionar categoría...</option>
+                                <option value="">Elegí una categoría</option>
                                 <option value="Alimentación">Alimentación</option>
                                 <option value="Vivienda">Vivienda</option>
                                 <option value="Transporte">Transporte</option>
@@ -412,7 +409,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Clasificación</h3>
 
                                 <div className="flex flex-col gap-2">
-                                    <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta Destino</label>
+                                    <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta de origen</label>
                                     <select
                                         id="account"
                                         name="account"
@@ -420,7 +417,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         onChange={handleChange}
                                         className="input cursor-pointer"
                                     >
-                                        <option value="">Seleccionar cuenta...</option>
+                                        <option value="">Elegí una cuenta</option>
                                         <option value="cash">Efectivo</option>
                                         <option value="bank_main">Cuenta Principal</option>
                                         <option value="savings">Ahorros</option>
@@ -428,13 +425,13 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <label htmlFor="notes" className="text-sm font-semibold text-text-secondary ml-1">Notas Adicionales</label>
+                                    <label htmlFor="notes" className="text-sm font-semibold text-text-secondary ml-1">Notas</label>
                                     <textarea
                                         id="notes"
                                         name="notes"
                                         value={formData.notes}
                                         onChange={handleChange}
-                                        placeholder="Detalles sobre este gasto..."
+                                        placeholder="Algo que quieras recordar de este gasto"
                                         rows="3"
                                         maxLength={MAX_NOTES}
                                         className="input resize-y"
@@ -449,7 +446,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                             <div className="card flex flex-col gap-6 w-full">
                                 <div className="flex items-center justify-between pb-2 border-b border-border-app/30">
                                     <div className="flex flex-col">
-                                        <h3 className="text-lg font-bold text-text-primary">Desglose (Cuentas Divididas)</h3>
+                                        <h3 className="text-lg font-bold text-text-primary">Desglose</h3>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" className="sr-only peer" checked={useDesglose} onChange={() => setUseDesglose(!useDesglose)} />
@@ -459,7 +456,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
 
                                 {useDesglose ? (
                                     <div className="flex flex-col gap-4 mt-2">
-                                        <p className="text-xs text-text-secondary">El monto principal se calculará en base a la suma o resta de estas sub-transacciones.</p>
+                                        <p className="text-xs text-text-secondary">El monto total sale de sumar y restar estas partes.</p>
 
                                         {formData.desglose.length > 0 && (
                                             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -481,7 +478,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                             <input
                                                 type="text"
                                                 name="descripcion"
-                                                placeholder="Descripción (Ej. Transferencia Juan)"
+                                                placeholder="Descripción de la parte"
                                                 value={newDesgloseItem.descripcion}
                                                 onChange={handleDesgloseChange}
                                                 maxLength={MAX_DESGLOSE_DESC}
@@ -529,7 +526,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-text-secondary italic">Activa esta opción si este gasto está compuesto por múltiples partes o incluye deducciones y comisiones que deseas rastrear de forma separada.</p>
+                                    <p className="text-sm text-text-secondary italic">Activá el desglose si este gasto viene en partes (por ejemplo, varias compras en un mismo recibo) y querés verlas por separado.</p>
                                 )}
                             </div>
                         </>
@@ -548,7 +545,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                         onClick={() => setIsExtended(!isExtended)}
                         className="text-sm font-semibold text-text-secondary hover:text-accent-app transition-colors cursor-pointer mr-auto w-full sm:w-auto text-left flex items-center gap-2 select-none"
                     >
-                        {isExtended ? 'Esconder Opciones Avanzadas' : 'Ver Opciones Avanzadas'}
+                        {isExtended ? 'Ocultar opciones avanzadas' : 'Ver opciones avanzadas'}
                         <ChevronDown size={16} className={`transform transition-transform ${isExtended ? 'rotate-180' : ''}`} />
                     </button>
 
@@ -566,7 +563,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                             disabled={isSubmitting}
                             className="btn-primary flex-1 sm:flex-none px-8 shadow-lg shadow-accent-app/20"
                         >
-                            {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar Cambios' : 'Guardar Gasto'}
+                            {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Guardar gasto'}
                         </button>
                     </div>
                 </div>

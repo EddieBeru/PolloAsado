@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import localforage from 'localforage'
 
 // Store dedicado para snapshots de estadísticas (offline-first).
@@ -54,5 +54,9 @@ export function useStats(fetcher, deps = [], cacheKey) {
     return () => { cancelled = true }
   }, [cacheKey, depsKey, tick])
 
-  return { ...state, refresh: () => setTick(t => t + 1) }
+  // Identidad estable: quien la use en un efecto (ej. revalidar al terminar una
+  // sincronización) no debería re-disparar ese efecto en cada render.
+  const refresh = useCallback(() => setTick(t => t + 1), [])
+
+  return { ...state, refresh }
 }

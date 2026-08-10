@@ -1,177 +1,88 @@
-# Supabase CLI
+# PolloAsado
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=develop)](https://coveralls.io/github/supabase/cli?branch=develop) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+Gestor de finanzas personales para uso propio y de un círculo pequeño: ingresos, gastos, ahorros, deudas y presupuestos, con desglose por línea en vez de solo totales.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+En el teléfono es captura (registrar un movimiento en segundos, a veces sin señal). En el escritorio es revisión (leer saldo, presupuestos y deuda en una sola pantalla).
 
-This repository contains all the functionality for Supabase CLI.
+## Stack
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+- **Frontend**: React 19 + Vite 8, Tailwind CSS 4, `lucide-react`, `recharts`
+- **Datos**: Supabase (Postgres + Auth + RLS), acceso vía `@supabase/supabase-js`
+- **Offline**: `localforage` como caché local, PWA con `vite-plugin-pwa` (`registerType: autoUpdate`)
 
-## Getting started
+## Estructura
 
-### Install the CLI
+```
+frontend/          app React (Vite)
+  src/components/  pantallas: Dashboard, Income, Outcome, Debt, Settings, Login, Layout
+  src/hooks/       datos y estado: useBalance, useIncomes, useOutcomes, useStats, useSettings, ...
+  src/lib/         supabaseClient, balance, period, format, stats, authErrors
+supabase/
+  squema.sql       esquema base
+  migrations/      migraciones incrementales
+  rls.sql          políticas Row Level Security
+DESIGN.md          sistema de diseño (tokens, tipografía, espaciado)
+PRODUCT.md         definición de producto: usuarios, propósito, principios
+```
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+## Puesta en marcha
+
+Requiere Node 20+ y un proyecto de Supabase.
 
 ```bash
-npm i supabase --save-dev
+cd frontend
+npm install
 ```
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
-
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
-
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+Crear `frontend/.env.local`:
 
 ```bash
-supabase bootstrap
+VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon key>
 ```
 
-Or using npx:
+Correr en desarrollo:
 
 ```bash
-npx supabase bootstrap
+npm run dev
 ```
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+Otros scripts: `npm run build`, `npm run preview`, `npm run lint`.
 
-## Docs
+## Base de datos
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+Aplicar el esquema y las migraciones al proyecto de Supabase, y después las políticas RLS:
 
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
+```bash
+supabase link --project-ref <project-ref>
+supabase db push
 ```
+
+Tablas principales: `perfiles`, `ingresos`, `gastos`, `desglose_ingresos`, `desglose_gastos`, `ahorros`, `presupuestos`, `deudas`, `abonos_deuda`, `debts`.
+
+Los agregados se calculan en Postgres, no en el cliente. RPCs disponibles (`supabase/migrations/20260705120000_create_stats_rpcs.sql`):
+
+| Función | Devuelve |
+|---|---|
+| `get_balance(p_hasta)` | saldo acumulado hasta una fecha |
+| `get_range_totals(p_start, p_end)` | totales de ingreso y gasto en un rango |
+| `get_income_expense_series(p_start, p_end, p_bucket)` | serie temporal por bucket |
+| `get_totals_by_category(p_tipo, p_start, p_end)` | totales por categoría |
+| `get_top_categories(p_tipo, p_limit, p_start, p_end)` | categorías con más movimiento |
+
+Todas están otorgadas al rol `authenticated` y filtradas por RLS: cada cuenta solo ve sus propios datos.
+
+## Cómo funciona la app
+
+- **Auth**: Supabase Auth con contraseña y magic link. El evento `PASSWORD_RECOVERY` abre la pantalla de cambio de clave (`UpdatePassword`).
+- **Navegación**: una sola pantalla con pestañas en `Layout` — Inicio, Ingresos, Gastos, Ahorros, Presupuestos, Deudas, Ajustes. No hay router.
+- **Temas**: cinco acentos (`slate`, `emerald`, `sky`, `amber`, `rose`) guardados en `localStorage` bajo `pollo_asado_theme` y aplicados como `data-theme`.
+- **Offline-first**: los listados se sirven de caché local y se sincronizan contra Supabase; los fallos de sincronización se reportan en la interfaz en vez de tragarse.
+
+## Diseño
+
+`DESIGN.md` es la fuente de verdad: tokens de color, escala tipográfica y espaciado. Reglas duras — color plano, sin gradientes, sin brillos ni neón. La calidez viene del espacio y de las palabras, no de la decoración. La copia de interfaz es en español, breve y sin relleno.
+
+## Licencia
+
+Ver [LICENSE](LICENSE).

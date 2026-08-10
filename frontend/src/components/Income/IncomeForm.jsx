@@ -125,10 +125,10 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
       const cached = getCachedRate(from, to)
       if (cached) {
         setFormData((prev) => ({ ...prev, tasa_cambio: cached.toString() }))
-        setRateError('Modo sin conexión: Usando última tasa conocida.')
+        setRateError('Sin conexión: usamos la última tasa guardada.')
       } else {
         setFormData((prev) => ({ ...prev, tasa_cambio: '' }))
-        setRateError('Sin conexión. La tasa se calculará al sincronizar.')
+        setRateError('Sin conexión: la tasa se calcula al sincronizar.')
       }
       return
     }
@@ -158,10 +158,10 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
       const cached = getCachedRate(from, to)
       if (cached) {
         setFormData((prev) => ({ ...prev, tasa_cambio: cached.toString() }))
-        setRateError('Fallo de red. Usando tasa cacheada.')
+        setRateError('Falló la red: usamos la última tasa guardada.')
       } else {
         setFormData((prev) => ({ ...prev, tasa_cambio: '' }))
-        setRateError('Error al obtener la tasa. Se calculará después.')
+        setRateError('No se pudo traer la tasa: se calcula al sincronizar.')
       }
     } finally {
       setIsFetchingRate(false)
@@ -285,11 +285,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="heading">
-            {isEditing ? 'Editar Ingreso' : 'Registrar Ingreso'}
+            {isEditing ? 'Editar ingreso' : 'Nuevo ingreso'}
           </h2>
-          <p className="text-sm text-text-secondary">
-            {isEditing ? 'Modifica los detalles de esta entrada.' : 'Añade una nueva entrada financiera al sistema.'}
-          </p>
         </div>
         <button
           type="button"
@@ -302,20 +299,20 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
       {isEditing && hasGroup && (
         <div className="card bg-warning-soft border-warning-line flex flex-col gap-3">
-          <span className="text-sm font-bold text-warning">Edición de Serie Recurrente</span>
-          <p className="text-sm text-text-secondary">Este ingreso pertenece a una serie recurrente. ¿Qué deseas editar?</p>
+          <span className="text-sm font-bold text-warning">Este ingreso se repite</span>
+          <p className="text-sm text-text-secondary">Pertenece a una serie. ¿Qué querés cambiar?</p>
           <div className="flex flex-col sm:flex-row gap-4 mt-2">
             <label className="flex items-center gap-2 cursor-pointer text-sm text-text-primary font-semibold">
               <input type="radio" name="updateMode" value="single" checked={updateMode === 'single'} onChange={() => setUpdateMode('single')} className="accent-accent-app w-4 h-4" />
-              Solo esta instancia
+              Solo este registro
             </label>
             <label className="flex items-center gap-2 cursor-pointer text-sm text-text-primary font-semibold">
               <input type="radio" name="updateMode" value="series" checked={updateMode === 'series'} onChange={() => setUpdateMode('series')} className="accent-accent-app w-4 h-4" />
-              Toda la serie (Futura e Histórica)
+              Toda la serie
             </label>
           </div>
           {updateMode === 'series' && (
-            <p className="text-xs text-warning italic">Nota: Al editar toda la serie, se actualizará el concepto, monto y categoría para todas las instancias asociadas. Las fechas y la frecuencia no serán modificadas.</p>
+            <p className="text-xs text-warning italic">Al editar la serie se cambian el concepto, el monto y la categoría de todos sus registros. Las fechas y la frecuencia quedan igual.</p>
           )}
         </div>
       )}
@@ -326,7 +323,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
           {/* Card 1: Información Básica */}
           <div className="card flex flex-col gap-6 w-full transition-all duration-500">
-            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Detalles Principales</h3>
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Detalles</h3>
 
             <div className="flex flex-col gap-2">
               <label htmlFor="concept" className="text-sm font-semibold text-text-secondary ml-1">Concepto *</label>
@@ -349,7 +346,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="amount" className="text-sm font-semibold text-text-secondary ml-1">Monto {formData.divisa_original !== baseCurrency ? '(Moneda Original)' : ''} *</label>
+              <label htmlFor="amount" className="text-sm font-semibold text-text-secondary ml-1">Monto {formData.divisa_original !== baseCurrency ? `(en ${formData.divisa_original})` : ''} *</label>
               <div className="relative flex">
                 <input
                   type="number"
@@ -388,10 +385,10 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                   <div className="flex items-center gap-2">
                     <span className={rateError ? 'text-warning' : 'text-text-secondary'}>
                       {isFetchingRate
-                        ? 'Calculando tasa...'
+                        ? 'Buscando la tasa…'
                         : formData.tasa_cambio
                           ? `1 ${formData.divisa_original} = ${formData.tasa_cambio} ${baseCurrency}`
-                          : rateError || 'Auto-cálculo pendiente'}
+                          : rateError || 'La tasa se calcula al sincronizar'}
                     </span>
                     {!formData.tasa_cambio && !isFetchingRate && (
                       <button
@@ -447,7 +444,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     onChange={handleChange}
                     className="input cursor-pointer"
                   >
-                    <option value="">Seleccionar categoría...</option>
+                    <option value="">Elegí una categoría</option>
                     <option value="salary">Salario</option>
                     <option value="business">Negocio</option>
                     <option value="freelance">Freelance</option>
@@ -458,7 +455,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta Destino</label>
+                  <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta de destino</label>
                   <select
                     id="account"
                     name="account"
@@ -466,7 +463,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     onChange={handleChange}
                     className="input cursor-pointer"
                   >
-                    <option value="">Seleccionar cuenta...</option>
+                    <option value="">Elegí una cuenta</option>
                     <option value="cash">Efectivo</option>
                     <option value="bank_main">Cuenta Principal</option>
                     <option value="savings">Ahorros</option>
@@ -474,13 +471,13 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="notes" className="text-sm font-semibold text-text-secondary ml-1">Notas Adicionales</label>
+                  <label htmlFor="notes" className="text-sm font-semibold text-text-secondary ml-1">Notas</label>
                   <textarea
                     id="notes"
                     name="notes"
                     value={formData.notes}
                     onChange={handleChange}
-                    placeholder="Detalles sobre este ingreso..."
+                    placeholder="Algo que quieras recordar de este ingreso"
                     rows="3"
                     maxLength={MAX_NOTES}
                     className="input resize-y"
@@ -495,7 +492,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
               <div className="card flex flex-col gap-6 w-full">
                 <div className="flex items-center justify-between pb-2 border-b border-border-app/30">
                   <div className="flex flex-col">
-                    <h3 className="text-lg font-bold text-text-primary">Desglose (Cuentas Divididas)</h3>
+                    <h3 className="text-lg font-bold text-text-primary">Desglose</h3>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={useDesglose} onChange={() => setUseDesglose(!useDesglose)} />
@@ -505,7 +502,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
                 {useDesglose ? (
                   <div className="flex flex-col gap-4 mt-2">
-                    <p className="text-xs text-text-secondary">El monto principal se calculará en base a la suma o resta de estas sub-transacciones.</p>
+                    <p className="text-xs text-text-secondary">El monto total sale de sumar y restar estas partes.</p>
 
                     {formData.desglose.length > 0 && (
                       <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -527,7 +524,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                       <input
                         type="text"
                         name="descripcion"
-                        placeholder="Descripción (Ej. Transferencia Juan)"
+                        placeholder="Descripción de la parte"
                         value={newDesgloseItem.descripcion}
                         onChange={handleDesgloseChange}
                         maxLength={MAX_DESGLOSE_DESC}
@@ -558,7 +555,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                           onClick={handleAddDesglose}
                           className="btn-secondary !px-4"
                         >
-                          Añadir
+                          Agregar
                         </button>
                       </div>
                       {desgloseError && (
@@ -575,7 +572,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary italic">Activa esta opción si este ingreso está compuesto por múltiples partes o incluye deducciones y comisiones que deseas rastrear de forma separada.</p>
+                  <p className="text-sm text-text-secondary italic">Activá el desglose si este ingreso viene en partes (por ejemplo, salario menos deducciones) y querés verlas por separado.</p>
                 )}
               </div>
 
@@ -585,7 +582,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                   <div className="flex flex-col gap-4">
                     {isEditing ? (
                       <p className="text-sm text-warning bg-warning-soft border border-warning-line p-4 rounded-xl">
-                        Nota: Al editar una serie existente, los parámetros de fechas y frecuencia están bloqueados por seguridad. Para cambiar la frecuencia, elimina la serie desde la base de datos y crea una nueva.
+                        En una serie que ya existe no se pueden cambiar las fechas ni la frecuencia. Para cambiarlas hay que borrar la serie y crear otra.
                       </p>
                     ) : (
                       <>
@@ -595,8 +592,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                             <div className="w-11 h-6 bg-surface-app/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-app"></div>
                           </label>
                           <div className="flex flex-col">
-                            <span className="text-lg font-bold text-text-primary">Ingreso Recurrente</span>
-                            <span className="text-xs text-text-secondary">Genera automáticamente futuros registros basados en un patrón.</span>
+                            <span className="text-lg font-bold text-text-primary">Se repite</span>
+                            <span className="text-xs text-text-secondary">Crea los próximos registros con la misma frecuencia.</span>
                           </div>
                         </div>
 
@@ -613,7 +610,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm font-semibold text-text-secondary ml-1">Duración Límite (Opcional)</label>
+                                <label className="text-sm font-semibold text-text-secondary ml-1">¿Cuántas veces? (opcional)</label>
                                 <div className="relative">
                                   <input
                                     type="number"
@@ -643,7 +640,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                               <div className="bg-bg-app rounded-2xl border border-border-app/30 p-5 flex flex-col gap-4 flex-1">
                                 <div className="flex justify-between items-center border-b border-border-app/30 pb-3">
                                   <h4 className="text-sm font-bold text-accent-app">
-                                    {formData.limite_recurrencia ? 'Fechas Proyectadas' : 'Próximas 5 Fechas (Vista Previa)'}
+                                    {formData.limite_recurrencia ? 'Fechas de la serie' : 'Próximas 5 fechas'}
                                   </h4>
                                   {formData.limite_recurrencia && (
                                     <button
@@ -651,7 +648,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                                       onClick={() => setIsCustomizingDates(!isCustomizingDates)}
                                       className={isCustomizingDates ? 'btn-primary px-3 py-1.5 text-xs' : 'btn-secondary px-3 py-1.5 text-xs'}
                                     >
-                                      {isCustomizingDates ? 'Terminar Edición' : 'Editar Fechas'}
+                                      {isCustomizingDates ? 'Listo' : 'Editar fechas'}
                                     </button>
                                   )}
                                 </div>
@@ -659,7 +656,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                                   {projectedDates.map((d, i) => (
                                     <div key={i} className="flex flex-col gap-1.5">
-                                      <span className="text-[10px] font-bold text-text-secondary pl-1">Iteración {i + 1}</span>
+                                      <span className="text-[10px] font-bold text-text-secondary pl-1">Fecha {i + 1}</span>
                                       {isCustomizingDates ? (
                                         <input
                                           type="date"
@@ -677,11 +674,11 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                                 </div>
 
                                 {!formData.limite_recurrencia && (
-                                  <p className="text-xs text-text-secondary italic mt-2">Como no hay límite especificado, la serie se tratará como un ingreso infinito que genera alertas al pasar cada periodo.</p>
+                                  <p className="text-xs text-text-secondary italic mt-2">Sin un número de veces, la serie sigue sin fecha de fin.</p>
                                 )}
                                 {formData.limite_recurrencia && (
                                   <div className="flex justify-between items-center mt-2 bg-positive-soft p-3 rounded-xl border border-positive-line">
-                                    <span className="text-sm text-text-primary">Proyección Total:</span>
+                                    <span className="text-sm text-text-primary">Total proyectado</span>
                                     <span className="num text-sm text-positive font-mono font-bold">
                                       {formatMoney(
                                         toNumber(formData.amount) *
@@ -717,7 +714,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
             onClick={() => setIsExtended(!isExtended)}
             className="text-sm font-semibold text-text-secondary hover:text-accent-app transition-colors cursor-pointer mr-auto w-full sm:w-auto text-left flex items-center gap-2 select-none"
           >
-            {isExtended ? 'Esconder Opciones Avanzadas' : 'Ver Opciones Avanzadas'}
+            {isExtended ? 'Ocultar opciones avanzadas' : 'Ver opciones avanzadas'}
             <ChevronDown size={16} className={`transform transition-transform ${isExtended ? 'rotate-180' : ''}`} />
           </button> 
 
@@ -735,7 +732,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
               disabled={isSubmitting}
               className="btn-primary flex-1 sm:flex-none px-8 shadow-lg shadow-accent-app/20"
             >
-              {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar Cambios' : 'Guardar Ingreso'}
+              {isSubmitting ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Guardar ingreso'}
             </button>
           </div>
         </div>
