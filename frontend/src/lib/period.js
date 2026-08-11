@@ -28,3 +28,12 @@ export function monthToDateRange(now = new Date()) {
   const ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
   return { start: `${ym}-01`, end: toISODate(now), ym }
 }
+
+/** Rango completo de un mes calendario. anio: 4 dígitos, mes: 1-12. */
+export function monthRange(anio, mes) {
+  const ym = `${anio}-${pad(mes)}`
+  const start = `${ym}-01`
+  const lastDay = new Date(anio, mes, 0).getDate()
+  const end = `${ym}-${pad(lastDay)}`
+  return { start, end, ym }
+}
