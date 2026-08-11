@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOutcomes } from '../../hooks/useOutcomes'
 import { useSettings } from '../../hooks/useSettings'
 import { formatMoney, toNumber } from '../../lib/format'
+import { CATEGORIAS_GASTO } from '../../lib/categorias'
+import { getFixedExpenseTemplates } from '../../lib/fixedExpenses'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 
 // Topes de captura. No son reglas de negocio: evitan que un dedo pegado o un
@@ -21,7 +23,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
     const [isCustomizingDates, setIsCustomizingDates] = useState(false)
     const [projectedDates, setProjectedDates] = useState([])
 
-    const { addOutcome, updateOutcome } = useOutcomes(user)
+    const { outcomes, addOutcome, updateOutcome } = useOutcomes(user)
+    const fixedTemplates = useMemo(() => getFixedExpenseTemplates(outcomes), [outcomes])
 
     const [updateMode, setUpdateMode] = useState('single') // 'single' | 'series'
     const isEditing = !!initialData
@@ -35,7 +38,10 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
         notes: initialData?.notes || '',
         desglose: initialData?.desglose || [],
         divisa_original: initialData?.divisa_original || 'CRC',
-        tasa_cambio: initialData?.tasa_cambio || ''
+        tasa_cambio: initialData?.tasa_cambio || '',
+        es_fijo: initialData?.es_fijo || false,
+        dia_esperado: initialData?.dia_esperado || '',
+        grupo_recurrencia: initialData?.grupo_recurrencia || null
     })
 
     // Disable Desglose toggle if editing and has desglose already (to keep it simple, it's just open)
@@ -201,6 +207,13 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
 
         if (formData.notes && formData.notes.length > MAX_NOTES) {
             errors.notes = `Máximo ${MAX_NOTES} caracteres.`
+        }
+
+        if (formData.es_fijo) {
+            const dia = toNumber(formData.dia_esperado, NaN)
+            if (!Number.isInteger(dia) || dia < 1 || dia > 31) {
+                errors.dia_esperado = 'Poné un día entre 1 y 31.'
+            }
         }
 
         return errors
@@ -385,15 +398,9 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 required
                             >
                                 <option value="">Elegí una categoría</option>
-                                <option value="Alimentación">Alimentación</option>
-                                <option value="Vivienda">Vivienda</option>
-                                <option value="Transporte">Transporte</option>
-                                <option value="Salud">Salud</option>
-                                <option value="Entretenimiento">Entretenimiento</option>
-                                <option value="Educación">Educación</option>
-                                <option value="Ropa">Ropa</option>
-                                <option value="Servicios">Servicios</option>
-                                <option value="Otros">Otros</option>
+                                {CATEGORIAS_GASTO.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
                             </select>
                             {fieldErrors.category && (
                                 <p className="text-xs text-negative ml-1">{fieldErrors.category}</p>
@@ -422,6 +429,57 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                         <option value="bank_main">Cuenta Principal</option>
                                         <option value="savings">Ahorros</option>
                                     </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2 pt-4 border-t border-border-app/20">
+                                    <label className="relative inline-flex items-center gap-3 cursor-pointer select-none">
+                                        <input type="checkbox" name="es_fijo" className="sr-only peer" checked={formData.es_fijo} onChange={handleChange} />
+                                        <div className="w-11 h-6 bg-surface-app/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary peer-checked:after:bg-bg-app after:border-border-app after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-app"></div>
+                                        <span className="text-sm font-semibold text-text-primary">Es un gasto fijo</span>
+                                    </label>
+
+                                    {formData.es_fijo && (
+                                        <div className="flex flex-col gap-4 mt-2">
+                                            <div className="flex flex-col gap-2">
+                                                <label htmlFor="dia_esperado" className="text-sm font-semibold text-text-secondary ml-1">Día esperado del mes</label>
+                                                <input
+                                                    type="number"
+                                                    id="dia_esperado"
+                                                    name="dia_esperado"
+                                                    value={formData.dia_esperado}
+                                                    onChange={handleChange}
+                                                    min="1"
+                                                    max="31"
+                                                    placeholder="Ej. 15"
+                                                    aria-invalid={!!fieldErrors.dia_esperado}
+                                                    aria-describedby={fieldErrors.dia_esperado ? 'dia_esperado-error' : undefined}
+                                                    className="input w-full sm:w-40 font-mono"
+                                                />
+                                                {fieldErrors.dia_esperado && (
+                                                    <p id="dia_esperado-error" className="text-xs text-negative ml-1">{fieldErrors.dia_esperado}</p>
+                                                )}
+                                            </div>
+
+                                            {!isEditing && fixedTemplates.length > 0 && (
+                                                <div className="flex flex-col gap-2">
+                                                    <label htmlFor="continuarFijo" className="text-sm font-semibold text-text-secondary ml-1">¿Es continuación de un fijo existente?</label>
+                                                    <select
+                                                        id="continuarFijo"
+                                                        value={formData.grupo_recurrencia || ''}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, grupo_recurrencia: e.target.value || null }))}
+                                                        className="input cursor-pointer"
+                                                    >
+                                                        <option value="">No, es un fijo nuevo</option>
+                                                        {fixedTemplates.map(t => (
+                                                            <option key={t.grupo_recurrencia} value={t.grupo_recurrencia}>
+                                                                {t.concept} ({t.category})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col gap-2">
