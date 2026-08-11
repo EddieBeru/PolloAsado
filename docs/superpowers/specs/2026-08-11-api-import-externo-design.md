@@ -112,6 +112,18 @@ Sección nueva en Config/Perfil ("API keys"):
 
 Implementación: hook `useApiKeys` (mismo patrón que `useReglasCategorizacion`: CRUD simple sobre tabla propia con RLS) + componente `ApiKeysSection`.
 
+### Documentación embebida
+
+Dentro de la misma sección "API keys" de Config/Perfil, debajo de la lista de keys: bloque de documentación estática (no necesita datos del backend, es texto/código fijo) con:
+
+- **Endpoint:** URL del RPC (`POST {SUPABASE_URL}/rest/v1/rpc/agregar_movimiento`), armada con la env var del proyecto para que el usuario pueda copiarla ya resuelta.
+- **Headers requeridos:** `apikey` (el anon key público del proyecto, también con botón copiar) y `Content-Type: application/json`.
+- **Body de ejemplo:** JSON con los campos de `agregar_movimiento` (`p_api_key`, `p_tipo`, `p_monto`, `p_descripcion`, `p_categoria`, `p_fecha`, `p_lugar`, `p_idempotency_key`), marcando cuáles son obligatorios y cuáles opcionales con su default.
+- **Respuesta de ejemplo:** shape de éxito (`id`, `categoria_asignada`, `duplicado`) y ejemplo de error (400 con mensaje de key inválida).
+- Nota de que `p_api_key` va en el body (no en headers) porque el RPC la valida internamente — a diferencia del `apikey` header que es el anon key público de Supabase.
+
+Es contenido estático embebido en el componente (mismo componente `ApiKeysSection` o un sub-componente `ApiDocsPanel` al lado), no un endpoint ni tabla nueva — se actualiza a mano si cambia el contrato del RPC.
+
 ## Manejo de errores
 
 - **Key inválida o revocada**: exception en el RPC → PostgREST responde 400 con el mensaje. El cliente externo (shortcut) puede mostrar notificación de fallo con ese texto.
