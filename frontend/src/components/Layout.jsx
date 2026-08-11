@@ -4,6 +4,7 @@ import Outcome from './Outcome'
 import Settings from './Settings'
 import Budget from './Budget'
 import Savings from './Savings'
+import Import from './Import'
 import DebtForm from './Debt/DebtForm'
 import DebtAnalysis from './Debt/DebtAnalysis'
 import {
@@ -183,6 +184,12 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Income user={user} />
           ) : activeTab === 'expenses' ? (
             <Outcome user={user} />
+          ) : activeTab === 'import' ? (
+            <Import user={user} />
+          ) : activeTab === 'savings' ? (
+            <Savings user={user} />
+          ) : activeTab === 'budgets' ? (
+            <Budget user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
