@@ -145,3 +145,16 @@ CREATE TABLE reglas_categorizacion (
 --     get_totals_by_category(p_tipo, p_start, p_end)            -> total y cantidad por categoría (ingreso|gasto)
 --     get_top_categories(p_tipo, p_limit, p_start, p_end)       -> top-N categorías
 --   Índices: idx_ingresos_user_fecha (ingresos user_id, fecha), idx_gastos_user_fecha (gastos user_id, fecha)
+
+-- API keys pa' automatizaciones externas (Shortcuts, etc.)
+CREATE TABLE api_keys (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  label TEXT NOT NULL,
+  key_hash TEXT NOT NULL UNIQUE,
+  last_used_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- gastos.idempotency_key / ingresos.idempotency_key (TEXT, nullable) también se agregan
+-- en esta migración, con índice único parcial por (user_id, idempotency_key).
