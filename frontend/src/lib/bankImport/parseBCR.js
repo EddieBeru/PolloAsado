@@ -1,6 +1,7 @@
 import { parseBankAmount, parseBankDate } from './parseAmount'
+import { BankFileParseError } from './errors'
 
-export class BankFileParseError extends Error {}
+export { BankFileParseError }
 
 const EXPECTED_HEADERS = [
   'Fecha contable', 'Fecha transacción', 'Hora', 'Documento',
