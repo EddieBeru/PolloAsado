@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { parseBCR, BankFileParseError } from '../lib/bankImport/parseBCR'
+import { getBankParser } from '../lib/bankImport/banks'
+import { BankFileParseError } from '../lib/bankImport/errors'
 import { normalizeDescripcion } from '../lib/bankImport/normalize'
 import { findManualMatches, findDoubleCharges } from '../lib/bankImport/dedupe'
 import { suggestCategory } from '../lib/bankImport/categorize'
@@ -18,10 +19,12 @@ export function useBankImport(user) {
         setSummary(null)
     }, [])
 
-    const loadFile = useCallback(async (file, reglas) => {
+    const loadFile = useCallback(async (file, reglas, bankId = 'bcr') => {
         setStatus('parsing')
         setError(null)
         setSummary(null)
+
+        const parser = getBankParser(bankId)
 
         let html
         try {
@@ -35,13 +38,13 @@ export function useBankImport(user) {
 
         let movimientos
         try {
-            movimientos = parseBCR(html)
+            movimientos = parser.parse(html)
         } catch (err) {
             if (err instanceof BankFileParseError) {
                 setError(err.message)
             } else {
                 console.error('Error inesperado parseando el archivo:', err)
-                setError('No pudimos leer este archivo — ¿es un export de movimientos de BCR?')
+                setError(`No pudimos leer este archivo — ¿es un export de movimientos de ${parser.label}?`)
             }
             setStatus('idle')
             return
