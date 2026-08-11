@@ -8,6 +8,7 @@ ALTER TABLE ahorros ENABLE ROW LEVEL SECURITY;
 ALTER TABLE presupuestos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE desglose_ingresos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE desglose_gastos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reglas_categorizacion ENABLE ROW LEVEL SECURITY;
 
 -- Policy temporal: cada usuario ve y modifica solo sus datos
 CREATE POLICY "usuario_solo_ve_los_suyos" ON ingresos FOR ALL USING (auth.uid() = user_id);
@@ -18,3 +19,4 @@ CREATE POLICY "usuario_solo_ve_los_suyos" ON ahorros FOR ALL USING (auth.uid() =
 CREATE POLICY "usuario_solo_ve_los_suyos" ON presupuestos FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "usuario_solo_ve_los_suyos" ON desglose_ingresos FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "usuario_solo_ve_los_suyos" ON desglose_gastos FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "usuario_solo_ve_los_suyos" ON reglas_categorizacion FOR ALL USING (auth.uid() = user_id);
