@@ -2,7 +2,16 @@
 CREATE TABLE perfiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   nombre TEXT,
-  preferencias JSONB DEFAULT '{"categorias_ingreso": [], "categorias_gasto": [], "tema": "slate", "divisa_principal": "CRC", "divisas_activas": ["CRC", "USD"]}'::jsonb,
+  preferencias JSONB DEFAULT '{
+    "categorias_ingreso": [], "categorias_gasto": [], "tema": "slate",
+    "divisa_principal": "CRC", "divisas_activas": ["CRC", "USD"],
+    "categoria_baldes": {
+      "Vivienda": "necesidad", "Servicios": "necesidad", "Salud": "necesidad",
+      "Transporte": "necesidad", "Alimentación": "necesidad",
+      "Entretenimiento": "gusto", "Ropa": "gusto", "Educación": "gusto", "Otros": "gusto"
+    },
+    "porcentajes_balde": { "necesidad": 50, "gusto": 30, "ahorro": 20 }
+  }'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -36,6 +45,8 @@ CREATE TABLE gastos (
   lugar TEXT,
   fecha DATE NOT NULL,
   es_fijo BOOLEAN DEFAULT FALSE,
+  dia_esperado INT, -- día del mes (1-31) esperado del pago, solo si es_fijo
+  grupo_recurrencia UUID, -- agrupa instancias del mismo fijo mes a mes
   es_recurrente BOOLEAN DEFAULT FALSE,
   frecuencia TEXT, -- 'mensual', 'semanal', etc.
   origen TEXT NOT NULL DEFAULT 'manual', -- 'manual' | 'importado'

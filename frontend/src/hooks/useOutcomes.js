@@ -278,6 +278,9 @@ export function useOutcomes(user) {
             divisa_original: formData.divisa_original,
             monto_original: originalAmount,
             tasa_cambio: rate,
+            es_fijo: !!formData.es_fijo,
+            dia_esperado: formData.es_fijo ? toNumber(formData.dia_esperado, null) : null,
+            grupo_recurrencia: formData.es_fijo ? (formData.grupo_recurrencia || crypto.randomUUID()) : null,
 
             // Datos UI
             concept: formData.concept,
@@ -341,6 +344,9 @@ export function useOutcomes(user) {
                     divisa_original: formData.divisa_original,
                     monto_original: originalAmount,
                     tasa_cambio: rate,
+                    es_fijo: !!formData.es_fijo,
+                    dia_esperado: formData.es_fijo ? toNumber(formData.dia_esperado, null) : null,
+                    grupo_recurrencia: formData.es_fijo ? (formData.grupo_recurrencia || crypto.randomUUID()) : null,
 
                     concept: formData.concept,
                     amount: finalAmount,
