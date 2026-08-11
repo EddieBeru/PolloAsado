@@ -179,7 +179,8 @@ export function useIncomes(user) {
             grupo_recurrencia: item.grupo_recurrencia || null,
             divisa_original: item.divisa_original || null,
             monto_original: item.monto_original || null,
-            tasa_cambio: item.tasa_cambio || null
+            tasa_cambio: item.tasa_cambio || null,
+            cuenta_id: item.cuenta_id
           }
 
           const { error: insertError } = await supabase
@@ -318,6 +319,7 @@ export function useIncomes(user) {
           divisa_original: formData.divisa_original,
           monto_original: originalAmount,
           tasa_cambio: rate,
+          cuenta_id: formData.cuenta_id,
 
           // Datos UI
           concept: formData.concept,
@@ -355,6 +357,7 @@ export function useIncomes(user) {
         divisa_original: formData.divisa_original,
         monto_original: originalAmount,
         tasa_cambio: rate,
+        cuenta_id: formData.cuenta_id,
 
         // Datos UI
         concept: formData.concept,
@@ -425,6 +428,7 @@ export function useIncomes(user) {
             divisa_original: formData.divisa_original,
             monto_original: originalAmount,
             tasa_cambio: rate,
+            cuenta_id: formData.cuenta_id,
 
             concept: formData.concept,
             amount: finalAmount,
@@ -449,6 +453,7 @@ export function useIncomes(user) {
             divisa_original: formData.divisa_original,
             monto_original: originalAmount,
             tasa_cambio: rate,
+            cuenta_id: formData.cuenta_id,
 
             concept: formData.concept,
             amount: finalAmount,
