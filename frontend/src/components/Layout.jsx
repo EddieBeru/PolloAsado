@@ -15,7 +15,8 @@ import {
   CreditCard,
   Settings as SettingsIcon,
   LogOut,
-  Palette
+  Palette,
+  Upload
 } from 'lucide-react'
 
 import polloSvg from '../assets/pollo.svg'
@@ -26,6 +27,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     { id: 'dashboard', name: 'Inicio', icon: LayoutDashboard },
     { id: 'income', name: 'Ingresos', icon: TrendingUp },
     { id: 'expenses', name: 'Gastos', icon: TrendingDown },
+    { id: 'import', name: 'Importar', icon: Upload },
     { id: 'savings', name: 'Ahorros', icon: PiggyBank },
     { id: 'budgets', name: 'Presupuestos', icon: Target },
     { id: 'debts', name: 'Deudas', icon: CreditCard },
@@ -181,10 +183,6 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Income user={user} />
           ) : activeTab === 'expenses' ? (
             <Outcome user={user} />
-          ) : activeTab === 'savings' ? (
-            <Savings user={user} />
-          ) : activeTab === 'budgets' ? (
-            <Budget user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
