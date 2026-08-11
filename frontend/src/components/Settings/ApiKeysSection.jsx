@@ -7,6 +7,7 @@ export default function ApiKeysSection({ user }) {
     const [label, setLabel] = useState('')
     const [nuevoToken, setNuevoToken] = useState(null)
     const [busy, setBusy] = useState(false)
+    const [showDocs, setShowDocs] = useState(false)
 
     const handleGenerar = async (e) => {
         e.preventDefault()
@@ -87,7 +88,11 @@ export default function ApiKeysSection({ user }) {
                 </div>
             )}
 
-            <ApiDocsPanel />
+            <button type="button" onClick={() => setShowDocs(true)} className="btn-secondary self-start">
+                Ver documentación de la API
+            </button>
+
+            {showDocs && <ApiDocsPanel onClose={() => setShowDocs(false)} />}
         </div>
     )
 }
