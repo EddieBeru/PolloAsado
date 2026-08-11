@@ -21,6 +21,8 @@ CREATE TABLE ingresos (
   monto_original DECIMAL(12,2),
   tasa_cambio DECIMAL(12,6),
   grupo_recurrencia UUID,
+  origen TEXT NOT NULL DEFAULT 'manual', -- 'manual' | 'importado'
+  documento_banco TEXT, -- folio bancario, solo si origen='importado'
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -36,6 +38,8 @@ CREATE TABLE gastos (
   es_fijo BOOLEAN DEFAULT FALSE,
   es_recurrente BOOLEAN DEFAULT FALSE,
   frecuencia TEXT, -- 'mensual', 'semanal', etc.
+  origen TEXT NOT NULL DEFAULT 'manual', -- 'manual' | 'importado'
+  documento_banco TEXT, -- folio bancario, solo si origen='importado'
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -108,6 +112,17 @@ CREATE TABLE desglose_gastos (
   monto DECIMAL(12,2) NOT NULL,
   es_deduccion BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Reglas de categorización aprendidas de imports bancarios
+CREATE TABLE reglas_categorizacion (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  patron TEXT NOT NULL,
+  categoria TEXT NOT NULL,
+  tipo TEXT NOT NULL, -- 'gasto' | 'ingreso'
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, patron, tipo)
 );
 
 -- Capa de estadísticas (agregación server-side).
