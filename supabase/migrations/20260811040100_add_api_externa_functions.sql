@@ -86,7 +86,7 @@ BEGIN
     END IF;
 
     IF v_row_id IS NOT NULL THEN
-      UPDATE api_keys SET last_used_at = NOW() WHERE id = v_key_id;
+      UPDATE api_keys SET last_used_at = NOW() WHERE api_keys.id = v_key_id;
       RETURN QUERY SELECT v_row_id, v_categoria, TRUE;
       RETURN;
     END IF;
@@ -127,12 +127,12 @@ BEGIN
       SELECT i.id, i.categoria INTO v_row_id, v_categoria
       FROM ingresos i WHERE i.user_id = v_user_id AND i.idempotency_key = p_idempotency_key;
     END IF;
-    UPDATE api_keys SET last_used_at = NOW() WHERE id = v_key_id;
+    UPDATE api_keys SET last_used_at = NOW() WHERE api_keys.id = v_key_id;
     RETURN QUERY SELECT v_row_id, v_categoria, TRUE;
     RETURN;
   END;
 
-  UPDATE api_keys SET last_used_at = NOW() WHERE id = v_key_id;
+  UPDATE api_keys SET last_used_at = NOW() WHERE api_keys.id = v_key_id;
   RETURN QUERY SELECT v_row_id, v_categoria, FALSE;
 END;
 $$;
