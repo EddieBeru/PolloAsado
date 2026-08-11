@@ -4,7 +4,7 @@ import { formatMoney } from '../../lib/format'
 export default function FixedExpensesChecklist({ fijos = [], hayAtrasados = false, loading, currency = 'CRC' }) {
     if (loading) {
         return (
-            <div className="card flex flex-col gap-4" aria-busy="true">
+            <div className="card h-full flex flex-col gap-4" aria-busy="true">
                 <div className="skeleton h-5 w-32" />
                 <div className="skeleton h-4 w-full" />
                 <div className="skeleton h-4 w-full" />
@@ -13,7 +13,7 @@ export default function FixedExpensesChecklist({ fijos = [], hayAtrasados = fals
     }
 
     return (
-        <div className="card flex flex-col gap-4">
+        <div className="card h-full flex flex-col gap-4">
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Gastos fijos este mes</h3>
 
             {hayAtrasados && (

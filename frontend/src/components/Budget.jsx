@@ -30,7 +30,7 @@ export default function Budget({ user }) {
         <div className="w-full flex-1 flex flex-col gap-8">
             <h2 className="heading">Presupuestos</h2>
 
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2 lg:gap-8">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
                 <FixedExpensesChecklist fijos={fijos} hayAtrasados={hayAtrasados} loading={loadingOut} currency={baseCurrency} />
                 <BudgetSplitCard baldes={baldes} loading={loadingSplit || loadingPrefs} hasIngreso={hasIngreso} currency={baseCurrency} />
             </div>

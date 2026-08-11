@@ -26,7 +26,7 @@ function currencyFormatter(currency) {
     formatter = new Intl.NumberFormat(LOCALE, {
       style: 'currency',
       currency,
-      currencyDisplay: 'code',
+      currencyDisplay: 'symbol',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })
@@ -51,7 +51,7 @@ const decimalFormatter = new Intl.NumberFormat(LOCALE, {
  * @param {boolean} [opts.signed]  fuerza '+' en positivos (listas de ingresos)
  * @param {boolean} [opts.absolute] formatea el valor absoluto (listas de gastos,
  *                                  donde el signo lo pone la etiqueta)
- * @returns {string} ej. '+CRC 1 234 567,00'
+ * @returns {string} ej. '+₡1 234 567,00'
  */
 export function formatMoney(value, currency = 'CRC', { signed = false, absolute = false } = {}) {
   let n = toNumber(value)
