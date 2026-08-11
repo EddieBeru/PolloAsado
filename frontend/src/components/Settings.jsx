@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import localforage from 'localforage'
 import { useSettings } from '../hooks/useSettings'
+import { useProfilePreferences } from '../hooks/useProfilePreferences'
+import { CATEGORIAS_GASTO } from '../lib/categorias'
+import { toNumber } from '../lib/format'
 
 // Stores locales que se borran al limpiar la caché. Las preferencias
 // (`settings`) se conservan a propósito: no son datos descargables de la nube.
@@ -8,8 +11,35 @@ const CACHE_STORES = ['incomes', 'outcomes', 'balance']
 
 export default function Settings({ user, onLogout }) {
   const { settings, loading, updateSettings } = useSettings()
+  const { preferencias, loading: loadingPrefs, syncError: prefsSyncError, updatePreferencias } = useProfilePreferences(user)
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
+  const [baldesDraft, setBaldesDraft] = useState(null)
+  const [porcentajesDraft, setPorcentajesDraft] = useState(null)
+  const [baldesError, setBaldesError] = useState(null)
+
+  const categoriaBaldes = baldesDraft || preferencias.categoria_baldes
+  const porcentajesBalde = porcentajesDraft || preferencias.porcentajes_balde
+
+  const handleBaldeChange = (categoria, balde) => {
+    setBaldesDraft({ ...categoriaBaldes, [categoria]: balde })
+  }
+
+  const handlePorcentajeChange = (balde, value) => {
+    setPorcentajesDraft({ ...porcentajesBalde, [balde]: toNumber(value, 0) })
+  }
+
+  const handleGuardarBaldes = async () => {
+    const suma = (porcentajesBalde.necesidad || 0) + (porcentajesBalde.gusto || 0) + (porcentajesBalde.ahorro || 0)
+    if (suma !== 100) {
+      setBaldesError(`Los porcentajes suman ${suma}%. Tienen que sumar 100%.`)
+      return
+    }
+    setBaldesError(null)
+    await updatePreferencias({ categoria_baldes: categoriaBaldes, porcentajes_balde: porcentajesBalde })
+    setBaldesDraft(null)
+    setPorcentajesDraft(null)
+  }
   const [categories, setCategories] = useState({
     ingreso: ['Salario', 'Negocio', 'Inversiones', 'Regalos', 'Otros'],
     gasto: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Hormiga']
@@ -294,6 +324,56 @@ export default function Settings({ user, onLogout }) {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* PANEL DE BALDES 50/30/20 */}
+          <div className="card flex flex-col gap-5">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Baldes 50/30/20</h3>
+            <p className="text-sm text-text-secondary">Decidí en qué balde cae cada categoría de gasto y qué porcentaje del ingreso le toca a cada balde.</p>
+
+            {prefsSyncError && <p className="notice-warning" role="status">{prefsSyncError}</p>}
+            {baldesError && <p className="notice-negative" role="alert">{baldesError}</p>}
+
+            {loadingPrefs ? (
+              <div className="skeleton h-32 w-full" />
+            ) : (
+              <>
+                <div className="flex flex-col gap-3">
+                  {CATEGORIAS_GASTO.map(cat => (
+                    <div key={cat} className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-primary">{cat}</span>
+                      <select
+                        value={categoriaBaldes[cat] || 'gusto'}
+                        onChange={(e) => handleBaldeChange(cat, e.target.value)}
+                        className="input w-auto cursor-pointer"
+                      >
+                        <option value="necesidad">Necesidad</option>
+                        <option value="gusto">Gusto</option>
+                        <option value="ahorro">Ahorro</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-border-app/20">
+                  {['necesidad', 'gusto', 'ahorro'].map(balde => (
+                    <div key={balde} className="flex flex-col gap-1 flex-1">
+                      <label className="text-xs font-semibold text-text-secondary capitalize">{balde}</label>
+                      <input
+                        type="number"
+                        value={porcentajesBalde[balde] ?? 0}
+                        onChange={(e) => handlePorcentajeChange(balde, e.target.value)}
+                        min="0"
+                        max="100"
+                        className="input font-mono"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <button type="button" onClick={handleGuardarBaldes} className="btn-primary mt-2">Guardar baldes</button>
+              </>
+            )}
           </div>
 
         </div>
