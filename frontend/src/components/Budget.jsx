@@ -19,11 +19,10 @@ export default function Budget({ user }) {
     const { settings } = useSettings()
     const baseCurrency = settings?.divisa_principal || 'CRC'
 
-    const now = new Date()
-    const { fijos, hayAtrasados } = useMemo(
-        () => computeFixedExpensesStatus(outcomes, { anio: now.getFullYear(), mes: now.getMonth() + 1, hoy: today() }),
-        [outcomes]
-    )
+    const { fijos, hayAtrasados } = useMemo(() => {
+        const now = new Date()
+        return computeFixedExpensesStatus(outcomes, { anio: now.getFullYear(), mes: now.getMonth() + 1, hoy: today() })
+    }, [outcomes])
 
     const { baldes, loading: loadingSplit, hasIngreso } = useBudgetSplit(preferencias, incomes, outcomes)
 
