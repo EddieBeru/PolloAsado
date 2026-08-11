@@ -17,7 +17,8 @@ Importar movimientos desde estados de cuenta de bancos (PDF/CSV) en vez de captu
 Más allá del balde 50/30/20 — patrones de gasto, comparativas mes a mes, alertas de anomalías. Depende de tener buena data ya fluyendo (fijos categorizados, balde configurado), así que tiene más sentido después del presupuesto inteligente.
 
 **Hub de deseos y proyectos futuros**
-Espacio pa' anotar deseos/proyectos (compras futuras, metas grandes) que se conecte con las metas de ahorro ya existentes y reciba consejos financieros sobre cómo priorizarlos. Se apoya en el motor de consejos del presupuesto inteligente, así que también viene después.
+Spec: `docs/superpowers/specs/2026-08-11-hub-de-deseos-design.md`
+Espacio pa' anotar deseos/proyectos (compras futuras, metas grandes) que se conecte con las metas de ahorro ya existentes y reciba consejos financieros sobre cómo priorizarlos. El spec define su propio motor de consejos básico (no depende del de presupuesto inteligente), así que puede implementarse en cualquier orden respecto a ese subsistema — la sección "Ahorros" donde vive sí requiere que `useSavings`/`AhorroForm`/`AhorroList` del spec de presupuesto inteligente existan primero.
 
 ## Orden sugerido
 
