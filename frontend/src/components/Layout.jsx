@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Income from './Income'
 import Outcome from './Outcome'
 import Settings from './Settings'
+import Import from './Import'
 import DebtForm from './Debt/DebtForm'
 import DebtAnalysis from './Debt/DebtAnalysis'
 import {
@@ -13,7 +14,8 @@ import {
   CreditCard,
   Settings as SettingsIcon,
   LogOut,
-  Palette
+  Palette,
+  Upload
 } from 'lucide-react'
 
 import polloSvg from '../assets/pollo.svg'
@@ -24,6 +26,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     { id: 'dashboard', name: 'Inicio', icon: LayoutDashboard },
     { id: 'income', name: 'Ingresos', icon: TrendingUp },
     { id: 'expenses', name: 'Gastos', icon: TrendingDown },
+    { id: 'import', name: 'Importar', icon: Upload },
     { id: 'savings', name: 'Ahorros', icon: PiggyBank },
     { id: 'budgets', name: 'Presupuestos', icon: Target },
     { id: 'debts', name: 'Deudas', icon: CreditCard },
@@ -179,6 +182,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
             <Income user={user} />
           ) : activeTab === 'expenses' ? (
             <Outcome user={user} />
+          ) : activeTab === 'import' ? (
+            <Import user={user} />
           ) : activeTab === 'settings' ? (
             <Settings user={user} onLogout={onLogout} />
           ) : activeTab === 'debts' ? (
