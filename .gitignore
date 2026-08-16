@@ -3,7 +3,7 @@ node_modules/
 .env
 dist/
 
-.docs/superpowers
+docs/superpowers
 .vscode
 .claude
 .impeccable
