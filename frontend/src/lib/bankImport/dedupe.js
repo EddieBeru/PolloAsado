@@ -38,3 +38,14 @@ export function findDoubleCharges(previewRows) {
   }
   return flags
 }
+
+/** Filas cuyo `documento` ya quedó registrado antes (importado o vinculado) — reimportar el mismo archivo no debe volver a pedir categoría por ellas. */
+export function findAlreadyImported(previewRows, documentosExistentes) {
+  const docs = documentosExistentes instanceof Set ? documentosExistentes : new Set(documentosExistentes)
+  const matched = new Set()
+  for (const row of previewRows) {
+    if (row.invalid) continue
+    if (row.documento && docs.has(row.documento)) matched.add(row.id)
+  }
+  return matched
+}

@@ -9,8 +9,8 @@ import { toNumber } from '../lib/format'
 /**
  * Balde 50/30/20 del mes indicado (default: mes actual).
  * @param {{categoria_baldes, porcentajes_balde}} preferencias
- * @param {Array} incomes  ingresos locales, pa' el delta pendiente del mes
- * @param {Array} outcomes gastos locales, pa' el delta pendiente del mes
+ * @param {Array} incomes  ingresos locales, para el delta pendiente del mes
+ * @param {Array} outcomes gastos locales, para el delta pendiente del mes
  * @param {number} [anio]
  * @param {number} [mes]
  */

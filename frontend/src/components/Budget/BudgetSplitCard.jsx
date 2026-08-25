@@ -23,7 +23,7 @@ export default function BudgetSplitCard({ baldes, loading, hasIngreso, currency 
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Cómo se te va la plata</h3>
 
             {!hasIngreso && (
-                <p className="notice-warning" role="status">Registrá un ingreso este mes pa' ver el reparto.</p>
+                <p className="notice-warning" role="status">Registrá un ingreso este mes para ver el reparto.</p>
             )}
 
             <BaldeBar baldes={baldes} />

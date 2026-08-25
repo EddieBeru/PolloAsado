@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findManualMatches, findDoubleCharges } from './dedupe'
+import { findManualMatches, findDoubleCharges, findAlreadyImported } from './dedupe'
 
 describe('findManualMatches', () => {
   it('detecta un existente con mismo monto y fecha dentro de 1 día', () => {
@@ -53,5 +53,27 @@ describe('findDoubleCharges', () => {
       { id: 'r2', fecha: '2026-08-10', tipo: 'gasto', descripcionNormalizada: 'MAXIPALI LAGUNI', invalid: false }
     ]
     expect(findDoubleCharges(rows).size).toBe(0)
+  })
+})
+
+describe('findAlreadyImported', () => {
+  it('marca la fila cuyo documento ya está registrado', () => {
+    const rows = [{ id: 'r1', documento: 'DOC123', invalid: false }]
+    expect(findAlreadyImported(rows, new Set(['DOC123']))).toEqual(new Set(['r1']))
+  })
+
+  it('no marca nada si el documento no está registrado', () => {
+    const rows = [{ id: 'r1', documento: 'DOC999', invalid: false }]
+    expect(findAlreadyImported(rows, new Set(['DOC123'])).size).toBe(0)
+  })
+
+  it('acepta un array en vez de un Set', () => {
+    const rows = [{ id: 'r1', documento: 'DOC123', invalid: false }]
+    expect(findAlreadyImported(rows, ['DOC123'])).toEqual(new Set(['r1']))
+  })
+
+  it('ignora filas inválidas', () => {
+    const rows = [{ id: 'r1', documento: 'DOC123', invalid: true }]
+    expect(findAlreadyImported(rows, new Set(['DOC123'])).size).toBe(0)
   })
 })

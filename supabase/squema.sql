@@ -159,7 +159,7 @@ CREATE TABLE reglas_categorizacion (
 --     get_top_categories(p_tipo, p_limit, p_start, p_end)       -> top-N categorías
 --   Índices: idx_ingresos_user_fecha (ingresos user_id, fecha), idx_gastos_user_fecha (gastos user_id, fecha)
 
--- API keys pa' automatizaciones externas (Shortcuts, etc.)
+-- API keys para automatizaciones externas (Shortcuts, etc.)
 CREATE TABLE api_keys (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) NOT NULL,

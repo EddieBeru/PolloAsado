@@ -3,23 +3,32 @@ import { supabase } from '../lib/supabaseClient'
 import { getBankParser } from '../lib/bankImport/banks'
 import { BankFileParseError } from '../lib/bankImport/errors'
 import { normalizeDescripcion } from '../lib/bankImport/normalize'
-import { findManualMatches, findDoubleCharges } from '../lib/bankImport/dedupe'
-import { suggestCategory } from '../lib/bankImport/categorize'
+import { findManualMatches, findDoubleCharges, findAlreadyImported } from '../lib/bankImport/dedupe'
+import { suggestCategory, buildMerchantMap } from '../lib/bankImport/categorize'
+import { pendingWizardRows } from '../lib/bankImport/wizardSteps'
+import { fetchTotalsByCategory } from '../lib/stats'
+
+const EMPTY_CATEGORY_HINTS = {
+    merchantMap: { gasto: new Map(), ingreso: new Map() },
+    frecuencias: { gasto: [], ingreso: [] }
+}
 
 export function useBankImport(user) {
     const [status, setStatus] = useState('idle')
     const [rows, setRows] = useState([])
     const [error, setError] = useState(null)
     const [summary, setSummary] = useState(null)
+    const [categoryHints, setCategoryHints] = useState(EMPTY_CATEGORY_HINTS)
 
     const reset = useCallback(() => {
         setStatus('idle')
         setRows([])
         setError(null)
         setSummary(null)
+        setCategoryHints(EMPTY_CATEGORY_HINTS)
     }, [])
 
-    const loadFile = useCallback(async (file, reglas, bankId = 'bcr') => {
+    const loadFile = useCallback(async (file, reglas, cuentaId, bankId = 'bcr') => {
         setStatus('parsing')
         setError(null)
         setSummary(null)
@@ -59,10 +68,26 @@ export function useBankImport(user) {
         const fechasValidas = movimientos.filter(m => m.fecha).map(m => m.fecha).sort()
         const start = fechasValidas[0] || new Date().toISOString().split('T')[0]
         const end = fechasValidas[fechasValidas.length - 1] || start
+        const documentosArchivo = [...new Set(movimientos.filter(m => m.documento).map(m => m.documento))]
 
-        const [gastosRes, ingresosRes] = await Promise.all([
-            supabase.from('gastos').select('id, monto, fecha').eq('user_id', user.id).is('documento_banco', null).gte('fecha', start).lte('fecha', end),
-            supabase.from('ingresos').select('id, monto, fecha').eq('user_id', user.id).is('documento_banco', null).gte('fecha', start).lte('fecha', end)
+        const [
+            gastosRes, ingresosRes,
+            gastosDocRes, ingresosDocRes,
+            gastosHistRes, ingresosHistRes,
+            frecGastoRes, frecIngresoRes
+        ] = await Promise.all([
+            supabase.from('gastos').select('id, monto, fecha').eq('user_id', user.id).eq('cuenta_id', cuentaId).is('documento_banco', null).gte('fecha', start).lte('fecha', end),
+            supabase.from('ingresos').select('id, monto, fecha').eq('user_id', user.id).eq('cuenta_id', cuentaId).is('documento_banco', null).gte('fecha', start).lte('fecha', end),
+            documentosArchivo.length > 0
+                ? supabase.from('gastos').select('documento_banco').eq('user_id', user.id).in('documento_banco', documentosArchivo)
+                : Promise.resolve({ data: [], error: null }),
+            documentosArchivo.length > 0
+                ? supabase.from('ingresos').select('documento_banco').eq('user_id', user.id).in('documento_banco', documentosArchivo)
+                : Promise.resolve({ data: [], error: null }),
+            supabase.from('gastos').select('descripcion, categoria').eq('user_id', user.id).order('fecha', { ascending: false }).limit(300),
+            supabase.from('ingresos').select('descripcion, categoria').eq('user_id', user.id).order('fecha', { ascending: false }).limit(300),
+            fetchTotalsByCategory({ tipo: 'gasto' }).catch(err => { console.error('No se pudieron traer las categorías más usadas:', err); return [] }),
+            fetchTotalsByCategory({ tipo: 'ingreso' }).catch(err => { console.error('No se pudieron traer las categorías más usadas:', err); return [] })
         ])
 
         if (gastosRes.error || ingresosRes.error) {
@@ -76,6 +101,22 @@ export function useBankImport(user) {
             ...(gastosRes.data || []).map(g => ({ ...g, tipo: 'gasto', tabla: 'gastos' })),
             ...(ingresosRes.data || []).map(i => ({ ...i, tipo: 'ingreso', tabla: 'ingresos' }))
         ]
+
+        const documentosYaImportados = new Set([
+            ...(gastosDocRes.data || []).map(g => g.documento_banco),
+            ...(ingresosDocRes.data || []).map(i => i.documento_banco)
+        ])
+
+        setCategoryHints({
+            merchantMap: {
+                gasto: buildMerchantMap(gastosHistRes.data || []),
+                ingreso: buildMerchantMap(ingresosHistRes.data || [])
+            },
+            frecuencias: {
+                gasto: [...frecGastoRes].sort((a, b) => b.cantidad - a.cantidad),
+                ingreso: [...frecIngresoRes].sort((a, b) => b.cantidad - a.cantidad)
+            }
+        })
 
         const previewRows = movimientos.map(m => {
             const descripcionNormalizada = normalizeDescripcion(m.descripcion)
@@ -92,10 +133,16 @@ export function useBankImport(user) {
             }
         })
 
+        const yaImportados = findAlreadyImported(previewRows, documentosYaImportados)
         const manualMatches = findManualMatches(previewRows, existentes)
         const doubleCharges = findDoubleCharges(previewRows)
 
         for (const row of previewRows) {
+            if (yaImportados.has(row.id)) {
+                row.flagTipo = 'ya_importado'
+                row.incluir = false
+                continue
+            }
             const manual = manualMatches.get(row.id)
             if (manual && manual.length > 0) {
                 row.flagTipo = 'ya_existe'
@@ -120,18 +167,24 @@ export function useBankImport(user) {
     const canConfirm = rows.length > 0 && rows.every(r => {
         if (!r.incluir) return true
         if (r.flagTipo && !r.resolucion) return false
-        if (r.tipo === 'gasto' && !r.categoria) return false
+        if (r.tipo === 'gasto' && !r.categoria && r.resolucion !== 'vincular') return false
         return true
     })
 
-    const confirmImport = useCallback(async (saveRegla, cuentaId) => {
+    const confirmImport = useCallback(async (saveRegla, cuentaId, { onlyResolved = false } = {}) => {
         setStatus('confirming')
+        const targetRows = onlyResolved ? rows.filter(r => pendingWizardRows([r]).length === 0) : rows
         let creados = 0
         let vinculados = 0
         let omitidos = 0
+        let yaImportados = 0
         let fallidos = 0
 
-        for (const row of rows) {
+        for (const row of targetRows) {
+            if (row.flagTipo === 'ya_importado') {
+                yaImportados++
+                continue
+            }
             if (!row.incluir || row.resolucion === 'omitir') {
                 omitidos++
                 continue
@@ -180,9 +233,9 @@ export function useBankImport(user) {
             }
         }
 
-        setSummary({ creados, vinculados, omitidos, fallidos })
+        setSummary({ creados, vinculados, omitidos, yaImportados, fallidos })
         setStatus('done')
     }, [rows, user])
 
-    return { status, rows, error, summary, canConfirm, loadFile, updateRow, confirmImport, reset }
+    return { status, rows, error, summary, canConfirm, categoryHints, loadFile, updateRow, confirmImport, reset }
 }

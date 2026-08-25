@@ -23,7 +23,7 @@ export function generarConsejos({ baldes, metasAhorro = [] }) {
       const faltante = metaActiva.monto_meta - metaActiva.monto_actual
       const meses = Math.ceil(faltante / libreGusto)
       return [
-        `Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres en gustos. A este ritmo le faltan ${meses} ${meses === 1 ? 'mes' : 'meses'} a tu meta "${metaActiva.nombre}" — capaz mandás parte pa' allá.`
+        `Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres en gustos. A este ritmo le faltan ${meses} ${meses === 1 ? 'mes' : 'meses'} a tu meta "${metaActiva.nombre}" — capaz mandás parte para allá.`
       ]
     }
     return [`Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres este mes.`]
