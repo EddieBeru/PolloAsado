@@ -2,15 +2,17 @@ import { useRef, useState, useEffect, useMemo } from 'react'
 import { useBankImport } from '../hooks/useBankImport'
 import { useReglasCategorizacion } from '../hooks/useReglasCategorizacion'
 import { useCuentas } from '../hooks/useCuentas'
-import ImportPreviewTable from './Import/ImportPreviewTable'
+import ImportWizard from './Import/ImportWizard'
+import ImportConfirmScreen from './Import/ImportConfirmScreen'
 import { Upload } from 'lucide-react'
 
 export default function Import({ user }) {
     const { reglas, saveRegla } = useReglasCategorizacion(user)
-    const { status, rows, error, summary, canConfirm, loadFile, updateRow, confirmImport, reset } = useBankImport(user)
+    const { status, rows, error, summary, canConfirm, categoryHints, loadFile, updateRow, confirmImport, reset } = useBankImport(user)
     const { cuentas } = useCuentas(user)
     const cuentasActivas = useMemo(() => cuentas.filter(c => c.activa), [cuentas])
     const [cuentaId, setCuentaId] = useState('')
+    const [wizardDone, setWizardDone] = useState(false)
     const fileInputRef = useRef(null)
 
     useEffect(() => {
@@ -23,13 +25,19 @@ export default function Import({ user }) {
     const handleFileChange = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
-        await loadFile(file, reglas)
+        setWizardDone(false)
+        await loadFile(file, reglas, cuentaId)
         e.target.value = ''
     }
 
     const handleConfirm = async () => {
         localStorage.setItem('polloasado_ultima_cuenta_id', cuentaId)
         await confirmImport(saveRegla, cuentaId)
+    }
+
+    const handleSavePartial = async () => {
+        localStorage.setItem('polloasado_ultima_cuenta_id', cuentaId)
+        await confirmImport(saveRegla, cuentaId, { onlyResolved: true })
     }
 
     return (
@@ -76,16 +84,18 @@ export default function Import({ user }) {
 
             {error && <p className="notice-negative" role="alert">{error}</p>}
 
-            {status === 'ready' && (
-                <>
-                    <ImportPreviewTable rows={rows} onUpdateRow={updateRow} />
-                    <div className="flex items-center gap-4">
-                        <button type="button" className="btn-primary" disabled={!canConfirm} onClick={handleConfirm}>
-                            Confirmar import ({rows.filter(r => r.incluir).length})
-                        </button>
-                        {!canConfirm && <p className="text-xs text-text-secondary">Resolvé las filas marcadas y asigná categoría a los gastos antes de confirmar.</p>}
-                    </div>
-                </>
+            {status === 'ready' && !wizardDone && (
+                <ImportWizard
+                    rows={rows}
+                    onUpdateRow={updateRow}
+                    categoryHints={categoryHints}
+                    onFinish={() => setWizardDone(true)}
+                    onSavePartial={handleSavePartial}
+                />
+            )}
+
+            {status === 'ready' && wizardDone && (
+                <ImportConfirmScreen rows={rows} canConfirm={canConfirm} onConfirm={handleConfirm} />
             )}
 
             {status === 'confirming' && <p className="text-text-secondary">Importando…</p>}
@@ -93,6 +103,7 @@ export default function Import({ user }) {
             {status === 'done' && summary && (
                 <div className="notice-warning">
                     {summary.creados} movimientos importados, {summary.vinculados} vinculados a existentes, {summary.omitidos} omitidos
+                    {summary.yaImportados > 0 ? `, ${summary.yaImportados} ya importados anteriormente` : ''}
                     {summary.fallidos > 0 ? `, ${summary.fallidos} fallaron (revisá la consola y reintentá)` : ''}.
                 </div>
             )}

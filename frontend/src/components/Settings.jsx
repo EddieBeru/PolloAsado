@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import localforage from 'localforage'
+import { supabase } from '../lib/supabaseClient'
 import { useSettings } from '../hooks/useSettings'
 import { useProfilePreferences } from '../hooks/useProfilePreferences'
 import { CATEGORIAS_GASTO } from '../lib/categorias'
@@ -7,11 +8,21 @@ import { toNumber } from '../lib/format'
 import ApiKeysSection from './Settings/ApiKeysSection'
 import CuentasSection from './Settings/CuentasSection'
 
+const NUKE_CONFIRM_TEXT = 'BORRAR TODO'
+
 // Stores locales que se borran al limpiar la caché. Las preferencias
 // (`settings`) se conservan a propósito: no son datos descargables de la nube.
 const CACHE_STORES = ['incomes', 'outcomes', 'balance']
 
-export default function Settings({ user, onLogout }) {
+const THEME_OPTIONS = [
+  { id: 'slate', name: 'Arena', color: 'bg-[var(--accent-slate)]' },
+  { id: 'emerald', name: 'Verde', color: 'bg-[var(--accent-emerald)]' },
+  { id: 'sky', name: 'Azul', color: 'bg-[var(--accent-sky)]' },
+  { id: 'amber', name: 'Oro', color: 'bg-[var(--accent-amber)]' },
+  { id: 'rose', name: 'Rosa', color: 'bg-[var(--accent-rose)]' }
+]
+
+export default function Settings({ user, onLogout, theme, setTheme }) {
   const { settings, loading, updateSettings } = useSettings()
   const { preferencias, loading: loadingPrefs, syncError: prefsSyncError, updatePreferencias } = useProfilePreferences(user)
   const [busy, setBusy] = useState(false)
@@ -100,6 +111,38 @@ export default function Settings({ user, onLogout }) {
     }
   }
 
+  // Solo pruebas: vacía gastos e ingresos del usuario para poder reimportar
+  // extractos sin chocar con la detección de "ya importado" (documento_banco).
+  const handleNukeAll = async () => {
+    const typed = window.prompt(
+      'Esto borra TODOS tus gastos e ingresos (todas las cuentas) para poder probar importaciones desde cero.\n\n' +
+      `Escribí "${NUKE_CONFIRM_TEXT}" para confirmar:`
+    )
+    if (typed !== NUKE_CONFIRM_TEXT) return
+
+    setActionError(null)
+    setBusy(true)
+    try {
+      const [gastosRes, ingresosRes] = await Promise.all([
+        supabase.from('gastos').delete().eq('user_id', user.id),
+        supabase.from('ingresos').delete().eq('user_id', user.id)
+      ])
+      if (gastosRes.error) throw gastosRes.error
+      if (ingresosRes.error) throw ingresosRes.error
+
+      await Promise.all(
+        CACHE_STORES.map(storeName =>
+          localforage.createInstance({ name: 'PolloAsado', storeName }).clear()
+        )
+      )
+      window.location.reload()
+    } catch (err) {
+      console.error('No se pudo hacer nuke de los datos:', err)
+      setActionError('No se pudo borrar todo. Intentá de nuevo.')
+      setBusy(false)
+    }
+  }
+
   const handleAddCategory = (e) => {
     e.preventDefault()
     const name = newCat.trim()
@@ -176,6 +219,25 @@ export default function Settings({ user, onLogout }) {
               <span className="text-sm font-semibold text-text-secondary">Correo</span>
               <span className="user-text text-sm font-mono text-text-primary">{user?.email || 'Sin correo asociado'}</span>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-text-secondary">Color de tema</span>
+              <div className="flex flex-wrap gap-2.5">
+                {THEME_OPTIONS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTheme(t.id)}
+                    aria-pressed={theme === t.id}
+                    className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
+                      }`}
+                    title={t.name}
+                    aria-label={`Cambiar a tema ${t.name}`}
+                  />
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={onLogout}
               className="btn-danger mt-2"
@@ -231,6 +293,23 @@ export default function Settings({ user, onLogout }) {
 
           {/* PANEL DE API KEYS */}
           <ApiKeysSection user={user} />
+
+          {/* ZONA DE PRUEBAS */}
+          {import.meta.env.DEV && (
+            <div className="card flex flex-col gap-4 border-negative/40">
+              <h3 className="text-lg font-bold text-negative pb-2 border-b border-border-app/30">Zona de pruebas</h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Borra todos tus gastos e ingresos (todas las cuentas) para poder reimportar extractos sin que queden marcados como "ya importado". Solo para testing, no hay vuelta atrás.
+              </p>
+              <button
+                onClick={handleNukeAll}
+                disabled={busy}
+                className="btn-danger"
+              >
+                Nuke all (borrar todo)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* COLUMNA DERECHA: Preferencias y Categorías */}

@@ -16,7 +16,6 @@ import {
   CreditCard,
   Settings as SettingsIcon,
   LogOut,
-  Palette,
   Upload
 } from 'lucide-react'
 
@@ -56,16 +55,8 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
     }
   }
 
-  const [debtPreview, setDebtPreview] = useState({ amount: '', due_date: '' })  //se guarda la informacion mientras el usuario ingresa los datos 
+  const [debtPreview, setDebtPreview] = useState({ amount: '', due_date: '' })  //se guarda la informacion mientras el usuario ingresa los datos
   const activeTabName = tabs.find((t) => t.id === activeTab)?.name || ''
-
-  const themeOptions = [
-    { id: 'slate', name: 'Arena', color: 'bg-[var(--accent-slate)]' },
-    { id: 'emerald', name: 'Verde', color: 'bg-[var(--accent-emerald)]' },
-    { id: 'sky', name: 'Azul', color: 'bg-[var(--accent-sky)]' },
-    { id: 'amber', name: 'Oro', color: 'bg-[var(--accent-amber)]' },
-    { id: 'rose', name: 'Rosa', color: 'bg-[var(--accent-rose)]' }
-  ]
 
   // 🛠️ FUNCIONES ESTABLES PARA EVITAR EL BUCLE INFINITO DE RENDERS
   // Deudas todavía no persiste nada: el formulario solo alimenta el análisis en
@@ -77,58 +68,24 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
   return (
     <div className="w-full min-h-screen bg-bg-app text-text-primary flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden flex flex-col gap-4 p-5 border-b border-border-app/30 bg-bg-app z-40 sticky top-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={polloSvg} alt="PolloAsado Logo" className="w-6 h-6" />
-            <h1 className="text-xl font-bold text-accent-app">PolloAsado</h1>
-          </div>
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-1.5 p-2 rounded-xl border border-border-app/50 hover:bg-surface-app text-text-secondary hover:text-text-primary text-xs font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+      <header className="md:hidden flex items-center justify-between p-5 border-b border-border-app/30 bg-bg-app z-40 sticky top-0">
+        <div className="flex items-center gap-2">
+          <img src={polloSvg} alt="PolloAsado Logo" className="w-6 h-6" />
+          <h1 className="text-xl font-bold text-accent-app">PolloAsado</h1>
         </div>
-
-        <div className="flex items-center justify-between">
-          {user && (
-            <p className="text-xs text-text-secondary min-w-0 mr-3">
-              <span className="font-mono text-text-primary font-semibold block truncate" title={user.user_metadata?.nombre || user.email}>
-                {user.user_metadata?.nombre || user.email}
-              </span>
-            </p>
-          )}
-          <div className="flex gap-2">
-            {themeOptions.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                aria-pressed={theme === t.id}
-                className={`w-5 h-5 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
-                  }`}
-                title={t.name}
-                aria-label={`Cambiar a tema ${t.name}`}
-              />
-            ))}
-          </div>
-        </div>
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-1.5 p-2 rounded-xl border border-border-app/50 hover:bg-surface-app text-text-secondary hover:text-text-primary text-xs font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </header>
 
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-64 lg:w-72 flex-col border-r border-border-app/30 p-6 gap-8 bg-surface-app/20 h-screen sticky top-0 overflow-y-auto">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3 mb-2">
-            <img src={polloSvg} alt="PolloAsado Logo" className="w-8 h-8" />
-            <h1 className="text-3xl font-bold text-accent-app">PolloAsado</h1>
-          </div>
-          {user && (
-            <p className="text-xs text-text-secondary mt-1">
-              <span className="text-text-primary font-semibold truncate block mt-0.5" title={user.user_metadata?.nombre || user.email}>
-                {user.user_metadata?.nombre || user.email}
-              </span>
-            </p>
-          )}
+        <div className="flex items-center gap-3">
+          <img src={polloSvg} alt="PolloAsado Logo" className="w-8 h-8" />
+          <h1 className="text-3xl font-bold text-accent-app">PolloAsado</h1>
         </div>
 
         <nav className="flex flex-col gap-2 flex-1 mt-4">
@@ -138,7 +95,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
               onClick={() => selectTab(tab.id)}
               aria-current={activeTab === tab.id ? 'page' : undefined}
               className={`text-left px-4 py-3.5 text-sm font-semibold transition-all duration-150 cursor-pointer rounded-2xl flex items-center gap-3 ${activeTab === tab.id
-                ? 'text-bg-app bg-accent-app shadow-md'
+                ? 'text-bg-app bg-accent-app shadow-lg'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-app/80'
                 }`}
             >
@@ -149,22 +106,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
         </nav>
 
         {/* Controls at the bottom of sidebar */}
-        <div className="flex flex-col gap-6 mt-auto pt-6 border-t border-border-app/30">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2.5">
-              {themeOptions.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  aria-pressed={theme === t.id}
-                  className={`w-6 h-6 rounded-full border-2 ${t.color} cursor-pointer transition-transform duration-100 ${theme === t.id ? 'scale-110 border-text-primary' : 'border-transparent hover:scale-105'
-                    }`}
-                  title={t.name}
-                  aria-label={`Cambiar a tema ${t.name}`}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="mt-auto pt-6 border-t border-border-app/30">
           <button
             onClick={onLogout}
             className="btn-secondary w-full"
@@ -176,7 +118,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 pb-[72px] md:pb-0">
+      <main className="flex-1 flex flex-col min-w-0 pb-24 md:pb-0">
         <div className="w-full max-w-[1600px] mx-auto p-5 md:p-8 lg:p-12 flex-1 flex flex-col">
           {activeTab === 'dashboard' ? (
             <Dashboard user={user} />
@@ -191,7 +133,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
           ) : activeTab === 'budgets' ? (
             <Budget user={user} />
           ) : activeTab === 'settings' ? (
-            <Settings user={user} onLogout={onLogout} />
+            <Settings user={user} onLogout={onLogout} theme={theme} setTheme={setTheme} />
           ) : activeTab === 'debts' ? (
             <div className="flex flex-col gap-6">
               <p className="notice-warning" role="status">
@@ -226,20 +168,20 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-bg-app/95 backdrop-blur-md border-t border-border-app/30 flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-50">
-        <div className="flex items-center overflow-x-auto hide-scrollbar gap-2 px-3 py-2 w-full">
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-bg-app/95 backdrop-blur-md border-t border-border-app/30 shadow-lg flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-50">
+        <div className="flex items-stretch overflow-x-auto hide-scrollbar gap-1.5 px-2.5 py-2 w-full justify-evenly">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => selectTab(tab.id)}
               aria-current={activeTab === tab.id ? 'page' : undefined}
-              className={`whitespace-nowrap flex-1 justify-center px-4 py-3 text-[11px] font-semibold transition-all duration-150 cursor-pointer rounded-2xl flex items-center gap-2 ${activeTab === tab.id
-                ? 'text-bg-app bg-accent-app shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+              className={`flex-shrink-0 min-w-[4.5rem] flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-2xl transition-all duration-150 cursor-pointer ${activeTab === tab.id
+                ? 'text-bg-app bg-accent-app shadow-lg'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface-app/60'
                 }`}
             >
               <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-bg-app' : 'text-accent-app opacity-80'}`} />
-              <span className="hidden sm:inline">{tab.name}</span>
+              <span className="text-xs font-medium leading-tight whitespace-nowrap">{tab.name}</span>
             </button>
           ))}
         </div>
