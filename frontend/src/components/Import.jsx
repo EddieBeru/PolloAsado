@@ -1,13 +1,24 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useBankImport } from '../hooks/useBankImport'
 import { useReglasCategorizacion } from '../hooks/useReglasCategorizacion'
+import { useCuentas } from '../hooks/useCuentas'
 import ImportPreviewTable from './Import/ImportPreviewTable'
 import { Upload } from 'lucide-react'
 
 export default function Import({ user }) {
     const { reglas, saveRegla } = useReglasCategorizacion(user)
     const { status, rows, error, summary, canConfirm, loadFile, updateRow, confirmImport, reset } = useBankImport(user)
+    const { cuentas } = useCuentas(user)
+    const cuentasActivas = useMemo(() => cuentas.filter(c => c.activa), [cuentas])
+    const [cuentaId, setCuentaId] = useState('')
     const fileInputRef = useRef(null)
+
+    useEffect(() => {
+        if (cuentaId || cuentasActivas.length === 0) return
+        const ultima = localStorage.getItem('polloasado_ultima_cuenta_id')
+        const existe = ultima && cuentasActivas.some(c => c.id === ultima)
+        setCuentaId(existe ? ultima : cuentasActivas[0].id)
+    }, [cuentasActivas, cuentaId])
 
     const handleFileChange = async (e) => {
         const file = e.target.files?.[0]
@@ -17,7 +28,8 @@ export default function Import({ user }) {
     }
 
     const handleConfirm = async () => {
-        await confirmImport(saveRegla)
+        localStorage.setItem('polloasado_ultima_cuenta_id', cuentaId)
+        await confirmImport(saveRegla, cuentaId)
     }
 
     return (
@@ -34,6 +46,19 @@ export default function Import({ user }) {
                     <p className="text-text-secondary">
                         Subí el archivo "Movimientos del día" que exportás desde la banca en línea de BCR.
                     </p>
+                    <div className="flex flex-col gap-2 w-full max-w-xs">
+                        <label htmlFor="cuenta_id" className="text-sm font-semibold text-text-secondary ml-1">Cuenta destino</label>
+                        <select
+                            id="cuenta_id"
+                            value={cuentaId}
+                            onChange={(e) => setCuentaId(e.target.value)}
+                            className="input cursor-pointer"
+                        >
+                            {cuentasActivas.map(c => (
+                                <option key={c.id} value={c.id}>{c.nombre}</option>
+                            ))}
+                        </select>
+                    </div>
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -41,7 +66,7 @@ export default function Import({ user }) {
                         onChange={handleFileChange}
                         className="hidden"
                     />
-                    <button type="button" className="btn-primary" onClick={() => fileInputRef.current?.click()}>
+                    <button type="button" className="btn-primary" disabled={!cuentaId} onClick={() => fileInputRef.current?.click()}>
                         <Upload size={18} /> Subir archivo
                     </button>
                 </div>

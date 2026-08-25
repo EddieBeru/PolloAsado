@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useOutcomes } from '../../hooks/useOutcomes'
+import { useCuentas } from '../../hooks/useCuentas'
 import { useSettings } from '../../hooks/useSettings'
 import { formatMoney, toNumber } from '../../lib/format'
 import { CATEGORIAS_GASTO } from '../../lib/categorias'
@@ -24,6 +25,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
     const [projectedDates, setProjectedDates] = useState([])
 
     const { outcomes, addOutcome, updateOutcome } = useOutcomes(user)
+    const { cuentas } = useCuentas(user)
+    const cuentasActivas = useMemo(() => cuentas.filter(c => c.activa), [cuentas])
     const fixedTemplates = useMemo(() => getFixedExpenseTemplates(outcomes), [outcomes])
 
     const [updateMode, setUpdateMode] = useState('single') // 'single' | 'series'
@@ -34,7 +37,7 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
         concept: initialData?.concept || '',
         date: initialData?.date || new Date().toISOString().split('T')[0],
         category: initialData?.category || '',
-        account: initialData?.account || '',
+        cuenta_id: initialData?.cuenta_id || '',
         notes: initialData?.notes || '',
         desglose: initialData?.desglose || [],
         divisa_original: initialData?.divisa_original || 'CRC',
@@ -44,13 +47,21 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
         grupo_recurrencia: initialData?.grupo_recurrencia || null
     })
 
+    // Default a la última cuenta usada (o la primera activa) cuando no se está editando.
+    useEffect(() => {
+        if (isEditing || formData.cuenta_id || cuentasActivas.length === 0) return
+        const ultima = localStorage.getItem('polloasado_ultima_cuenta_id')
+        const existe = ultima && cuentasActivas.some(c => c.id === ultima)
+        setFormData(prev => ({ ...prev, cuenta_id: existe ? ultima : cuentasActivas[0].id }))
+    }, [cuentasActivas, isEditing])
+
     // Disable Desglose toggle if editing and has desglose already (to keep it simple, it's just open)
     useEffect(() => {
         if (initialData && initialData.desglose && initialData.desglose.length > 0) {
             setUseDesglose(true)
             setIsExtended(true)
         }
-        if (initialData && (initialData.category || initialData.account || initialData.notes)) {
+        if (initialData && (initialData.category || initialData.notes)) {
             setIsExtended(true)
         }
     }, [initialData])
@@ -205,6 +216,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
 
         if (!formData.category) errors.category = 'Elegí una categoría.'
 
+        if (!formData.cuenta_id) errors.cuenta_id = 'Elegí una cuenta.'
+
         if (formData.notes && formData.notes.length > MAX_NOTES) {
             errors.notes = `Máximo ${MAX_NOTES} caracteres.`
         }
@@ -232,6 +245,8 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
 
         setFormError(null)
         setIsSubmitting(true)
+
+        localStorage.setItem('polloasado_ultima_cuenta_id', formData.cuenta_id)
 
         const finalData = {
             ...formData,
@@ -406,6 +421,26 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                                 <p className="text-xs text-negative ml-1">{fieldErrors.category}</p>
                             )}
                         </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="cuenta_id" className="text-sm font-semibold text-text-secondary ml-1">Cuenta *</label>
+                            <select
+                                id="cuenta_id"
+                                name="cuenta_id"
+                                value={formData.cuenta_id}
+                                onChange={handleChange}
+                                className="input cursor-pointer"
+                                required
+                            >
+                                <option value="">Elegí una cuenta</option>
+                                {cuentasActivas.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                                ))}
+                            </select>
+                            {fieldErrors.cuenta_id && (
+                                <p className="text-xs text-negative ml-1">{fieldErrors.cuenta_id}</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Opciones Avanzadas */}
@@ -414,22 +449,6 @@ export default function OutcomeForm({ user, setView, initialData, onCancel }) {
                             {/* Card 2: Clasificación */}
                             <div className="card flex flex-col gap-6 w-full">
                                 <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Clasificación</h3>
-
-                                <div className="flex flex-col gap-2">
-                                    <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta de origen</label>
-                                    <select
-                                        id="account"
-                                        name="account"
-                                        value={formData.account}
-                                        onChange={handleChange}
-                                        className="input cursor-pointer"
-                                    >
-                                        <option value="">Elegí una cuenta</option>
-                                        <option value="cash">Efectivo</option>
-                                        <option value="bank_main">Cuenta Principal</option>
-                                        <option value="savings">Ahorros</option>
-                                    </select>
-                                </div>
 
                                 <div className="flex flex-col gap-2 pt-4 border-t border-border-app/20">
                                     <label className="relative inline-flex items-center gap-3 cursor-pointer select-none">
