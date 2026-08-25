@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useIncomes } from '../../hooks/useIncomes'
+import { useCuentas } from '../../hooks/useCuentas'
 import { useSettings } from '../../hooks/useSettings'
 import { formatMoney, toNumber } from '../../lib/format'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
@@ -23,6 +24,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
   const [projectedDates, setProjectedDates] = useState([])
 
   const { addIncome, updateIncome } = useIncomes(user)
+  const { cuentas } = useCuentas(user)
+  const cuentasActivas = useMemo(() => cuentas.filter(c => c.activa), [cuentas])
 
   const [updateMode, setUpdateMode] = useState('single') // 'single' | 'series'
   const isEditing = !!initialData
@@ -33,7 +36,7 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
     concept: initialData?.concept || '',
     date: initialData?.date || new Date().toISOString().split('T')[0],
     category: initialData?.category || '',
-    account: initialData?.account || '',
+    cuenta_id: initialData?.cuenta_id || '',
     notes: initialData?.notes || '',
     desglose: initialData?.desglose || [],
     es_recurrente: initialData?.es_recurrente || false,
@@ -43,13 +46,21 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
     tasa_cambio: initialData?.tasa_cambio || ''
   })
 
+  // Default a la última cuenta usada (o la primera activa) cuando no se está editando.
+  useEffect(() => {
+    if (isEditing || formData.cuenta_id || cuentasActivas.length === 0) return
+    const ultima = localStorage.getItem('polloasado_ultima_cuenta_id')
+    const existe = ultima && cuentasActivas.some(c => c.id === ultima)
+    setFormData(prev => ({ ...prev, cuenta_id: existe ? ultima : cuentasActivas[0].id }))
+  }, [cuentasActivas, isEditing])
+
   // Disable Desglose toggle if editing and has desglose already (to keep it simple, it's just open)
   useEffect(() => {
     if (initialData && initialData.desglose && initialData.desglose.length > 0) {
       setUseDesglose(true)
       setIsExtended(true)
     }
-    if (initialData && (initialData.category || initialData.account || initialData.notes)) {
+    if (initialData && (initialData.category || initialData.notes)) {
       setIsExtended(true)
     }
   }, [initialData])
@@ -225,6 +236,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) errors.date = 'Elegí una fecha válida.'
 
+    if (!formData.cuenta_id) errors.cuenta_id = 'Elegí una cuenta.'
+
     if (formData.notes && formData.notes.length > MAX_NOTES) {
       errors.notes = `Máximo ${MAX_NOTES} caracteres.`
     }
@@ -252,6 +265,8 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
 
     setFormError(null)
     setIsSubmitting(true)
+
+    localStorage.setItem('polloasado_ultima_cuenta_id', formData.cuenta_id)
 
     const finalData = {
       ...formData,
@@ -426,6 +441,26 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                 <p id="date-error" className="text-xs text-negative ml-1">{fieldErrors.date}</p>
               )}
             </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="cuenta_id" className="text-sm font-semibold text-text-secondary ml-1">Cuenta *</label>
+              <select
+                id="cuenta_id"
+                name="cuenta_id"
+                value={formData.cuenta_id}
+                onChange={handleChange}
+                className="input cursor-pointer"
+                required
+              >
+                <option value="">Elegí una cuenta</option>
+                {cuentasActivas.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+              {fieldErrors.cuenta_id && (
+                <p className="text-xs text-negative ml-1">{fieldErrors.cuenta_id}</p>
+              )}
+            </div>
           </div>
 
           {/* Opciones Avanzadas */}
@@ -451,22 +486,6 @@ export default function IncomeForm({ user, setView, initialData, onCancel }) {
                     <option value="investments">Inversiones</option>
                     <option value="gifts">Regalos</option>
                     <option value="other">Otros</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="account" className="text-sm font-semibold text-text-secondary ml-1">Cuenta de destino</label>
-                  <select
-                    id="account"
-                    name="account"
-                    value={formData.account}
-                    onChange={handleChange}
-                    className="input cursor-pointer"
-                  >
-                    <option value="">Elegí una cuenta</option>
-                    <option value="cash">Efectivo</option>
-                    <option value="bank_main">Cuenta Principal</option>
-                    <option value="savings">Ahorros</option>
                   </select>
                 </div>
 

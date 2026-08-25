@@ -124,7 +124,7 @@ export function useBankImport(user) {
         return true
     })
 
-    const confirmImport = useCallback(async (saveRegla) => {
+    const confirmImport = useCallback(async (saveRegla, cuentaId) => {
         setStatus('confirming')
         let creados = 0
         let vinculados = 0
@@ -162,7 +162,8 @@ export function useBankImport(user) {
                 fecha: row.fecha,
                 es_recurrente: false,
                 origen: 'importado',
-                documento_banco: row.documento
+                documento_banco: row.documento,
+                cuenta_id: cuentaId
             }
             if (tabla === 'gastos') payload.es_fijo = false
 

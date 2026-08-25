@@ -5,6 +5,7 @@ import { useProfilePreferences } from '../hooks/useProfilePreferences'
 import { CATEGORIAS_GASTO } from '../lib/categorias'
 import { toNumber } from '../lib/format'
 import ApiKeysSection from './Settings/ApiKeysSection'
+import CuentasSection from './Settings/CuentasSection'
 
 // Stores locales que se borran al limpiar la caché. Las preferencias
 // (`settings`) se conservan a propósito: no son datos descargables de la nube.
@@ -224,6 +225,9 @@ export default function Settings({ user, onLogout }) {
               </button>
             </div>
           </div>
+
+          {/* PANEL DE CUENTAS */}
+          <CuentasSection user={user} />
 
           {/* PANEL DE API KEYS */}
           <ApiKeysSection user={user} />

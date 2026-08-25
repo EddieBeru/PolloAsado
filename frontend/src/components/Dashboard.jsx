@@ -1,16 +1,19 @@
 import { useEffect, useRef } from "react"
 import CurrentBalance from "./Dashboard/CurrentBalance"
 import TopCategories from "./Dashboard/TopCategories"
+import MisCuentas from "./Dashboard/MisCuentas"
 import { useIncomes } from '../hooks/useIncomes'
 import { useOutcomes } from '../hooks/useOutcomes'
 import { useBalance } from '../hooks/useBalance'
 import { useMonthTotals } from '../hooks/useMonthTotals'
 import { useSpendingByCategory } from '../hooks/useSpendingByCategory'
+import { useCuentas } from '../hooks/useCuentas'
 
 export default function Dashboard({ user }) {
 
     const { incomes, loading: loadingIn, isSyncing: isSyncingIn, syncError: syncErrorIn } = useIncomes(user)
     const { outcomes, loading: loadingOut, isSyncing: isSyncingOut, syncError: syncErrorOut } = useOutcomes(user)
+    const { cuentas } = useCuentas(user)
 
     const {
         balance,
@@ -75,6 +78,10 @@ export default function Dashboard({ user }) {
                 />
                 <TopCategories spending={spending} monthGastos={month.gastos} />
             </div>
+
+            {cuentas.filter(c => c.activa).length > 1 && (
+                <MisCuentas cuentas={cuentas.filter(c => c.activa)} />
+            )}
         </div>
     )
 }

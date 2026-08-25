@@ -281,6 +281,7 @@ export function useOutcomes(user) {
             es_fijo: !!formData.es_fijo,
             dia_esperado: formData.es_fijo ? toNumber(formData.dia_esperado, null) : null,
             grupo_recurrencia: formData.es_fijo ? (formData.grupo_recurrencia || crypto.randomUUID()) : null,
+            cuenta_id: formData.cuenta_id,
 
             // Datos UI
             concept: formData.concept,
@@ -347,6 +348,7 @@ export function useOutcomes(user) {
                     es_fijo: !!formData.es_fijo,
                     dia_esperado: formData.es_fijo ? toNumber(formData.dia_esperado, null) : null,
                     grupo_recurrencia: formData.es_fijo ? (formData.grupo_recurrencia || crypto.randomUUID()) : null,
+                    cuenta_id: formData.cuenta_id,
 
                     concept: formData.concept,
                     amount: finalAmount,

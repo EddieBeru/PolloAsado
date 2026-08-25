@@ -15,6 +15,17 @@ CREATE TABLE perfiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Cuentas (carteras): bancos, efectivo, tarjetas. Saldo se calcula, no se guarda.
+CREATE TABLE cuentas (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  nombre TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'banco', -- 'banco' | 'efectivo' | 'tarjeta' | 'otro'
+  saldo_inicial DECIMAL(12,2) NOT NULL DEFAULT 0,
+  activa BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Ingresos: cuánto y cuándo
 CREATE TABLE ingresos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -32,6 +43,7 @@ CREATE TABLE ingresos (
   grupo_recurrencia UUID,
   origen TEXT NOT NULL DEFAULT 'manual', -- 'manual' | 'importado'
   documento_banco TEXT, -- folio bancario, solo si origen='importado'
+  cuenta_id UUID REFERENCES cuentas(id) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -51,6 +63,7 @@ CREATE TABLE gastos (
   frecuencia TEXT, -- 'mensual', 'semanal', etc.
   origen TEXT NOT NULL DEFAULT 'manual', -- 'manual' | 'importado'
   documento_banco TEXT, -- folio bancario, solo si origen='importado'
+  cuenta_id UUID REFERENCES cuentas(id) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -158,3 +171,6 @@ CREATE TABLE api_keys (
 );
 -- gastos.idempotency_key / ingresos.idempotency_key (TEXT, nullable) también se agregan
 -- en esta migración, con índice único parcial por (user_id, idempotency_key).
+
+-- agregar_movimiento (migración 20260811050100) acepta p_cuenta_id opcional;
+-- si es NULL resuelve a la cuenta "General" del usuario dueño de la api key.
