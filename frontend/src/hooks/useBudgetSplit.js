@@ -2,35 +2,30 @@ import { useMemo } from 'react'
 import { useStats } from './useStats'
 import { fetchRangeTotals, fetchTotalsByCategory } from '../lib/stats'
 import { computePendingSplit } from '../lib/balance'
-import { monthRange } from '../lib/period'
 import { computeBudgetSplit } from '../lib/budgetSplit'
 import { toNumber } from '../lib/format'
 
 /**
- * Balde 50/30/20 del mes indicado (default: mes actual).
+ * Balde 50/30/20 del ciclo activo. Usa el rango completo del ciclo (sin recorte a hoy).
+ *
+ * @param {{ start, end, id }} range  rango del ciclo, de useCycle()
  * @param {{categoria_baldes, porcentajes_balde}} preferencias
- * @param {Array} incomes  ingresos locales, para el delta pendiente del mes
- * @param {Array} outcomes gastos locales, para el delta pendiente del mes
- * @param {number} [anio]
- * @param {number} [mes]
+ * @param {Array} incomes  ingresos locales, para el delta pendiente
+ * @param {Array} outcomes gastos locales, para el delta pendiente
  */
-export function useBudgetSplit(preferencias, incomes = [], outcomes = [], anio, mes) {
-  const now = new Date()
-  const targetAnio = anio ?? now.getFullYear()
-  const targetMes = mes ?? now.getMonth() + 1
-
-  const { start, end, ym } = useMemo(() => monthRange(targetAnio, targetMes), [targetAnio, targetMes])
+export function useBudgetSplit(range, preferencias, incomes = [], outcomes = []) {
+  const { start, end, id } = range
 
   const { data: rangeTotals, loading: loadingIngreso, error: errorIngreso, stale: staleIngreso } = useStats(
     () => fetchRangeTotals({ start, end }),
     [start, end],
-    `range:${ym}`
+    `range:${start}:${end}`
   )
 
   const { data: byCategory, loading: loadingCategorias, error: errorCategorias, stale: staleCategorias } = useStats(
     () => fetchTotalsByCategory({ tipo: 'gasto', start, end }),
     [start, end],
-    `by-category:gasto:${ym}`
+    `by-category:gasto:${start}:${end}`
   )
 
   const pending = useMemo(
@@ -59,6 +54,6 @@ export function useBudgetSplit(preferencias, incomes = [], outcomes = [], anio, 
     hasIngreso: ingresoMensual > 0,
     start,
     end,
-    ym
+    ym: id
   }
 }
