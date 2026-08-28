@@ -1,5 +1,5 @@
 // Checklist de gastos fijos: agrupa outcomes por grupo_recurrencia y calcula
-// estado (pagado/pendiente/atrasado) para el mes indicado.
+// estado (pagado/pendiente/atrasado) para el ciclo indicado.
 
 /**
  * Instancia más reciente de cada grupo_recurrencia activo (plantilla del fijo).
@@ -23,23 +23,44 @@ export function getFixedExpenseTemplates(outcomes = []) {
 }
 
 /**
- * Estado de cada fijo para el mes/año dados.
+ * Resuelve el día-del-mes `dia` (1-31) a la única fecha 'YYYY-MM-DD' dentro de
+ * [start, end]. El corte por día de inicio del ciclo garantiza que cada
+ * día-del-mes aparece exactamente una vez. Devuelve null si `dia` no cae nunca
+ * (p. ej. dia=31 y el ciclo no toca ningún mes de 31 días) o si `dia` es null.
+ */
+function fechaEsperadaEnRango(dia, start, end) {
+  if (dia == null) return null
+  const [sy, sm] = start.split('-').map(Number)
+  const [ey, em] = end.split('-').map(Number)
+  const candidatos = sy === ey && sm === em
+    ? [[sy, sm]]
+    : [[sy, sm], [ey, em]]
+  for (const [y, m] of candidatos) {
+    const ultimo = new Date(y, m, 0).getDate()
+    if (dia > ultimo) continue
+    const iso = `${y}-${String(m).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+    if (iso >= start && iso <= end) return iso
+  }
+  return null
+}
+
+/**
+ * Estado de cada fijo para el ciclo [start, end].
  * @param {Array} outcomes
- * @param {{anio: number, mes: number, hoy: string}} params  hoy en 'YYYY-MM-DD'
+ * @param {{ start: string, end: string, hoy: string }} params  fechas en 'YYYY-MM-DD'
  * @returns {{ fijos: Array, hayAtrasados: boolean }}
  */
-export function computeFixedExpensesStatus(outcomes = [], { anio, mes, hoy }) {
+export function computeFixedExpensesStatus(outcomes = [], { start, end, hoy }) {
   const templates = getFixedExpenseTemplates(outcomes)
-  const ym = `${anio}-${String(mes).padStart(2, '0')}`
-  const diaHoy = Number(hoy.slice(8, 10))
-  const hoyEsDelMes = hoy.slice(0, 7) === ym
+  const hoyEnCiclo = hoy >= start && hoy <= end
 
   const fijos = templates.map(t => {
     const pagado = outcomes.some(o =>
       o.grupo_recurrencia === t.grupo_recurrencia &&
-      o.date && o.date.slice(0, 7) === ym
+      o.date && o.date >= start && o.date <= end
     )
-    const atrasado = !pagado && hoyEsDelMes && t.dia_esperado != null && diaHoy > t.dia_esperado
+    const fechaEsperada = fechaEsperadaEnRango(t.dia_esperado, start, end)
+    const atrasado = !pagado && hoyEnCiclo && fechaEsperada != null && hoy > fechaEsperada
     return { ...t, pagado, atrasado }
   })
 
