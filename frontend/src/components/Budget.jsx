@@ -11,6 +11,7 @@ import { useSettings } from '../hooks/useSettings'
 import { computeFixedExpensesStatus } from '../lib/fixedExpenses'
 import { today } from '../lib/period'
 import { useCycle } from '../context/cycle'
+import CycleNav from './CycleNav'
 
 export default function Budget({ user }) {
     const { outcomes, loading: loadingOut } = useOutcomes(user)
@@ -30,6 +31,8 @@ export default function Budget({ user }) {
     return (
         <div className="w-full flex-1 flex flex-col gap-8">
             <h2 className="heading">Presupuestos</h2>
+
+            <CycleNav />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
                 <FixedExpensesChecklist fijos={fijos} hayAtrasados={hayAtrasados} loading={loadingOut} currency={baseCurrency} />
