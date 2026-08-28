@@ -26,7 +26,7 @@ export function generarConsejos({ baldes, metasAhorro = [] }) {
         `Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres en gustos. A este ritmo le faltan ${meses} ${meses === 1 ? 'mes' : 'meses'} a tu meta "${metaActiva.nombre}" — capaz mandás parte para allá.`
       ]
     }
-    return [`Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres este mes.`]
+    return [`Te quedan ₡${Math.round(libreGusto).toLocaleString('es-CR')} libres este período.`]
   }
 
   return []
