@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useStats } from './useStats'
 import { fetchTopCategories } from '../lib/stats'
-import { monthToDateRange } from '../lib/period'
+import { clampEndToday } from '../lib/period'
 import { toNumber } from '../lib/format'
 
 // Se piden más categorías de las que se muestran: con la lista casi completa se
@@ -11,21 +11,22 @@ const FETCH_LIMIT = 50
 export const SIN_CATEGORIA = 'Sin categoría'
 
 /**
- * Gasto del mes agrupado por categoría, mayor primero.
+ * Gasto del ciclo activo agrupado por categoría, mayor primero.
  *
  * Los gastos locales pendientes se mezclan en el conteo del servidor para que
  * una categoría recién usada aparezca al instante, aunque no haya red.
  *
+ * @param {{ start, end, id, isCurrent }} range  rango del ciclo, de useCycle()
  * @param {Array} outcomes gastos locales
  * @returns {{ categories: Array<{categoria, total, cantidad}>, hasData, loading, stale, error, refresh }}
  */
-export function useSpendingByCategory(outcomes = []) {
-  const { start, end, ym } = useMemo(() => monthToDateRange(), [])
+export function useSpendingByCategory(range, outcomes = []) {
+  const { start, end } = useMemo(() => clampEndToday(range), [range])
 
   const { data, loading, error, stale, refresh } = useStats(
     () => fetchTopCategories({ tipo: 'gasto', limit: FETCH_LIMIT, start, end }),
     [start, end],
-    `cats:gasto:${ym}`
+    `cats:gasto:${start}:${end}`
   )
 
   const categories = useMemo(() => {
