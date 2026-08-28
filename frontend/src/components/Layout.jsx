@@ -21,6 +21,7 @@ import {
 
 import polloSvg from '../assets/pollo.svg'
 import Dashboard from './Dashboard'
+import { CycleProvider } from '../context/CycleContext'
 
 export default function Layout({ user, onLogout, theme, setTheme }) {
   const tabs = [
@@ -66,6 +67,7 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
   const handlePreviewDebt = (datos) => setDebtPreview(datos);
 
   return (
+    <CycleProvider user={user}>
     <div className="w-full min-h-screen bg-bg-app text-text-primary flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-5 border-b border-border-app/30 bg-bg-app z-40 sticky top-0">
@@ -187,5 +189,6 @@ export default function Layout({ user, onLogout, theme, setTheme }) {
         </div>
       </nav>
     </div>
+    </CycleProvider>
   )
 }
