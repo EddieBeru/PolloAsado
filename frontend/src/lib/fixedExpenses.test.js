@@ -20,27 +20,47 @@ describe('getFixedExpenseTemplates', () => {
 })
 
 describe('computeFixedExpensesStatus', () => {
-  it('marca pagado si hay una instancia del grupo con fecha en el mes', () => {
-    const { fijos } = computeFixedExpensesStatus([luz, luzAgosto], { anio: 2026, mes: 8, hoy: '2026-08-11' })
+  it('marca pagado si hay una instancia del grupo con fecha dentro del rango', () => {
+    const { fijos } = computeFixedExpensesStatus([luz, luzAgosto], { start: '2026-08-01', end: '2026-08-31', hoy: '2026-08-11' })
     expect(fijos.find(f => f.grupo_recurrencia === 'g-luz').pagado).toBe(true)
   })
 
-  it('marca pendiente y atrasado si hoy pasó el día esperado sin pago este mes', () => {
-    const { fijos, hayAtrasados } = computeFixedExpensesStatus([alquiler], { anio: 2026, mes: 8, hoy: '2026-08-11' })
+  it('no cuenta como pagado un pago fuera del rango', () => {
+    // luz pagada el 8 de agosto; el ciclo es julio
+    const { fijos } = computeFixedExpensesStatus([luzAgosto], { start: '2026-07-01', end: '2026-07-31', hoy: '2026-07-20' })
+    expect(fijos.find(f => f.grupo_recurrencia === 'g-luz').pagado).toBe(false)
+  })
+
+  it('marca atrasado si hoy pasó la fecha esperada dentro del ciclo y no hay pago', () => {
+    const { fijos, hayAtrasados } = computeFixedExpensesStatus([alquiler], { start: '2026-08-01', end: '2026-08-31', hoy: '2026-08-11' })
     const alq = fijos.find(f => f.grupo_recurrencia === 'g-alq')
     expect(alq.pagado).toBe(false)
     expect(alq.atrasado).toBe(true)
     expect(hayAtrasados).toBe(true)
   })
 
-  it('no marca atrasado si todavía no llega el día esperado', () => {
-    const { fijos, hayAtrasados } = computeFixedExpensesStatus([alquiler], { anio: 2026, mes: 8, hoy: '2026-08-02' })
+  it('no marca atrasado si todavía no llega la fecha esperada', () => {
+    const { fijos, hayAtrasados } = computeFixedExpensesStatus([alquiler], { start: '2026-08-01', end: '2026-08-31', hoy: '2026-08-02' })
     expect(fijos[0].atrasado).toBe(false)
     expect(hayAtrasados).toBe(false)
   })
 
+  it('ciclo a caballo entre dos meses: fija la fecha esperada en la mitad correcta', () => {
+    // ciclo 28 jul -> 27 ago. alquiler dia_esperado=5 cae el 5 de agosto (2ª mitad).
+    // hoy = 10 de agosto: ya pasó -> atrasado.
+    const { fijos } = computeFixedExpensesStatus([alquiler], { start: '2026-07-28', end: '2026-08-27', hoy: '2026-08-10' })
+    expect(fijos[0].atrasado).toBe(true)
+  })
+
+  it('ciclo a caballo: dia_esperado en la 1ª mitad todavía sin llegar', () => {
+    // ciclo 28 jul -> 27 ago. dia_esperado=10 -> única fecha con día 10 en el rango
+    // es el 10 de agosto. hoy = 5 de agosto: todavía no llega -> no atrasado.
+    const { fijos } = computeFixedExpensesStatus([{ ...luz, date: '2026-06-10' }], { start: '2026-07-28', end: '2026-08-27', hoy: '2026-08-05' })
+    expect(fijos[0].atrasado).toBe(false)
+  })
+
   it('sin fijos configurados devuelve lista vacía', () => {
-    const { fijos, hayAtrasados } = computeFixedExpensesStatus([variable], { anio: 2026, mes: 8, hoy: '2026-08-11' })
+    const { fijos, hayAtrasados } = computeFixedExpensesStatus([variable], { start: '2026-08-01', end: '2026-08-31', hoy: '2026-08-11' })
     expect(fijos).toEqual([])
     expect(hayAtrasados).toBe(false)
   })
