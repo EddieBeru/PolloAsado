@@ -5,6 +5,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useProfilePreferences } from '../hooks/useProfilePreferences'
 import { CATEGORIAS_GASTO } from '../lib/categorias'
 import { toNumber } from '../lib/format'
+import { cycleRange } from '../lib/period'
 import ApiKeysSection from './Settings/ApiKeysSection'
 import CuentasSection from './Settings/CuentasSection'
 
@@ -30,6 +31,27 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
   const [baldesDraft, setBaldesDraft] = useState(null)
   const [porcentajesDraft, setPorcentajesDraft] = useState(null)
   const [baldesError, setBaldesError] = useState(null)
+  const [diaDraft, setDiaDraft] = useState(null)
+  const [diaError, setDiaError] = useState(null)
+
+  const diaInicioCiclo = diaDraft ?? preferencias.dia_inicio_ciclo ?? 1
+
+  const handleGuardarDiaInicio = async () => {
+    const n = Number(diaDraft ?? preferencias.dia_inicio_ciclo)
+    if (!Number.isInteger(n) || n < 1 || n > 31) {
+      setDiaError('Tiene que ser un día entre 1 y 31.')
+      return
+    }
+    setDiaError(null)
+    await updatePreferencias({ dia_inicio_ciclo: n })
+    setDiaDraft(null)
+  }
+
+  const cicloPreview = (() => {
+    const n = Number(diaInicioCiclo)
+    if (!Number.isInteger(n) || n < 1 || n > 31) return null
+    return cycleRange(n, 0)
+  })()
 
   const categoriaBaldes = baldesDraft || preferencias.categoria_baldes
   const porcentajesBalde = porcentajesDraft || preferencias.porcentajes_balde
@@ -411,6 +433,48 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* SECCIÓN CICLO / PERÍODO */}
+          <div className="card flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Ciclo / período</h3>
+            <p className="text-sm text-text-secondary">
+              El día que empieza tu mes financiero. Si te pagan el 28, poné 28: del 28 de un mes al 27 del siguiente cuenta como un solo período.
+            </p>
+
+            {diaError && <p className="notice-negative" role="alert">{diaError}</p>}
+
+            {loadingPrefs ? (
+              <div className="skeleton h-20 w-full" />
+            ) : (
+              <>
+                <div className="flex items-end gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="dia-inicio-ciclo" className="text-xs font-semibold text-text-secondary">Día de inicio</label>
+                    <input
+                      id="dia-inicio-ciclo"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={diaInicioCiclo}
+                      onChange={(e) => setDiaDraft(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="input font-mono w-24"
+                    />
+                  </div>
+                  <button type="button" onClick={handleGuardarDiaInicio} className="btn-primary">Guardar</button>
+                </div>
+
+                {cicloPreview && (
+                  <p className="text-sm text-text-secondary">
+                    Período actual: <span className="text-text-primary font-medium">{cicloPreview.start}</span> a{' '}
+                    <span className="text-text-primary font-medium">{cicloPreview.end}</span>{' '}
+                    → se muestra como <span className="text-text-primary font-medium capitalize">«{cicloPreview.label}»</span>
+                  </p>
+                )}
+
+                <p className="text-xs text-text-secondary">Cambiar esto reagrupa todas las estadísticas por el nuevo período.</p>
+              </>
+            )}
           </div>
 
           {/* PANEL DE BALDES 50/30/20 */}
