@@ -9,6 +9,7 @@ import { useMonthTotals } from '../hooks/useMonthTotals'
 import { useSpendingByCategory } from '../hooks/useSpendingByCategory'
 import { useCuentas } from '../hooks/useCuentas'
 import { useCycle } from '../context/cycle'
+import CycleNav from './CycleNav'
 
 export default function Dashboard({ user }) {
 
@@ -62,6 +63,8 @@ export default function Dashboard({ user }) {
             <h2 className="heading user-text">
                 {nombre ? `Hola, ${nombre}` : 'Tu dinero hoy'}
             </h2>
+
+            <CycleNav />
 
             {syncError && (
                 <p className="notice-warning" role="status">{syncError}</p>
