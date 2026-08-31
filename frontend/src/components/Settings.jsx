@@ -8,6 +8,10 @@ import { toNumber } from '../lib/format'
 import { cycleRange } from '../lib/period'
 import ApiKeysSection from './Settings/ApiKeysSection'
 import CuentasSection from './Settings/CuentasSection'
+import {DragDropProvider} from '@dnd-kit/react';
+
+import {DraggableBucketItem} from './Buckets/DraggableBucketItem';
+import {DroppableBucket} from './Buckets/DroppableBucket';
 
 const NUKE_CONFIRM_TEXT = 'BORRAR TODO'
 
@@ -33,6 +37,9 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
   const [baldesError, setBaldesError] = useState(null)
   const [diaDraft, setDiaDraft] = useState(null)
   const [diaError, setDiaError] = useState(null)
+
+  //Testing, remove or replace
+  const [isDropped, setIsDropped] = useState(false);
 
   const diaInicioCiclo = diaDraft ?? preferencias.dia_inicio_ciclo ?? 1
 
@@ -321,14 +328,14 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
             <div className="card flex flex-col gap-4 border-negative/40">
               <h3 className="text-lg font-bold text-negative pb-2 border-b border-border-app/30">Zona de pruebas</h3>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Borra todos tus gastos e ingresos (todas las cuentas) para poder reimportar extractos sin que queden marcados como "ya importado". Solo para testing, no hay vuelta atrás.
+                Borrar todo para lograr probar funcionalidades sin importar los datos ya importados.
               </p>
               <button
                 onClick={handleNukeAll}
                 disabled={busy}
                 className="btn-danger"
               >
-                Nuke all (borrar todo)
+                Nuke all
               </button>
             </div>
           )}
@@ -439,8 +446,7 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
           <div className="card flex flex-col gap-4">
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Ciclo / período</h3>
             <p className="text-sm text-text-secondary">
-              El día que empieza tu mes financiero. Si te pagan el 28, poné 28: del 28 de un mes al 27 del siguiente cuenta como un solo período.
-            </p>
+              Decide el día en que comienza tu mes financiero.  </p>
 
             {diaError && <p className="notice-negative" role="alert">{diaError}</p>}
 
@@ -480,7 +486,7 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
           {/* PANEL DE BALDES 50/30/20 */}
           <div className="card flex flex-col gap-5">
             <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Baldes 50/30/20</h3>
-            <p className="text-sm text-text-secondary">Decidí en qué balde cae cada categoría de gasto y qué porcentaje del ingreso le toca a cada balde.</p>
+            <p className="text-sm text-text-secondary">Decide en qué balde cae cada categoría de gasto y qué porcentaje del ingreso le toca a cada balde.</p>
 
             {prefsSyncError && <p className="notice-warning" role="status">{prefsSyncError}</p>}
             {baldesError && <p className="notice-negative" role="alert">{baldesError}</p>}
@@ -525,6 +531,24 @@ export default function Settings({ user, onLogout, theme, setTheme }) {
                 <button type="button" onClick={handleGuardarBaldes} className="btn-primary mt-2">Guardar baldes</button>
               </>
             )}
+          </div>
+            
+          <DragDropProvider
+            onDragEnd={(event) => {
+              if (event.canceled) return;
+
+              const {target} = event.operation;
+              setIsDropped(target?.id === 'droppable');
+            }}>
+
+            {!isDropped && <DraggableBucketItem />}
+
+            <DroppableBucket id="droppable">
+              {isDropped && <DraggableBucketItem />}
+            </DroppableBucket>
+          </DragDropProvider>
+          <div>
+
           </div>
 
         </div>
