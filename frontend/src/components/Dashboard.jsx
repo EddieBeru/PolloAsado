@@ -8,12 +8,15 @@ import { useBalance } from '../hooks/useBalance'
 import { useMonthTotals } from '../hooks/useMonthTotals'
 import { useSpendingByCategory } from '../hooks/useSpendingByCategory'
 import { useCuentas } from '../hooks/useCuentas'
+import { useCycle } from '../context/cycle'
+import CycleNav from './CycleNav'
 
 export default function Dashboard({ user }) {
 
     const { incomes, loading: loadingIn, isSyncing: isSyncingIn, syncError: syncErrorIn } = useIncomes(user)
     const { outcomes, loading: loadingOut, isSyncing: isSyncingOut, syncError: syncErrorOut } = useOutcomes(user)
     const { cuentas } = useCuentas(user)
+    const { range, prefsLoading } = useCycle()
 
     const {
         balance,
@@ -24,8 +27,8 @@ export default function Dashboard({ user }) {
         refresh,
     } = useBalance(user, incomes, outcomes)
 
-    const month = useMonthTotals(incomes, outcomes)
-    const spending = useSpendingByCategory(outcomes)
+    const month = useMonthTotals(range, incomes, outcomes)
+    const spending = useSpendingByCategory(range, outcomes)
 
     // Re-correr el RPC del baseline cuando termina una sincronización (true -> false),
     // para que los items recién sincronizados pasen al baseline sin doble conteo.
@@ -44,7 +47,7 @@ export default function Dashboard({ user }) {
         wasSyncing.current = syncing
     }, [syncing, refresh, refreshMonth, refreshSpending])
 
-    const loading = loadingIn || loadingOut
+    const loading = loadingIn || loadingOut || prefsLoading
 
     // Un mismo corte de red produce el mismo mensaje en ambos hooks; mostramos uno.
     const syncError = syncErrorIn && syncErrorOut && syncErrorIn === syncErrorOut
@@ -60,6 +63,8 @@ export default function Dashboard({ user }) {
             <h2 className="heading user-text">
                 {nombre ? `Hola, ${nombre}` : 'Tu dinero hoy'}
             </h2>
+
+            <CycleNav />
 
             {syncError && (
                 <p className="notice-warning" role="status">{syncError}</p>

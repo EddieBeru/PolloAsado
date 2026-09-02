@@ -21,10 +21,13 @@ const DEFAULT_CATEGORIA_BALDES = {
 
 const DEFAULT_PORCENTAJES_BALDE = { necesidad: 50, gusto: 30, ahorro: 20 }
 
+const DEFAULT_DIA_INICIO_CICLO = 1
+
 export function useProfilePreferences(user) {
   const [preferencias, setPreferencias] = useState({
     categoria_baldes: DEFAULT_CATEGORIA_BALDES,
-    porcentajes_balde: DEFAULT_PORCENTAJES_BALDE
+    porcentajes_balde: DEFAULT_PORCENTAJES_BALDE,
+    dia_inicio_ciclo: DEFAULT_DIA_INICIO_CICLO
   })
   const [loading, setLoading] = useState(true)
   const [syncError, setSyncError] = useState(null)
@@ -61,7 +64,8 @@ export function useProfilePreferences(user) {
         const remote = data.preferencias || {}
         const merged = {
           categoria_baldes: remote.categoria_baldes || DEFAULT_CATEGORIA_BALDES,
-          porcentajes_balde: remote.porcentajes_balde || DEFAULT_PORCENTAJES_BALDE
+          porcentajes_balde: remote.porcentajes_balde || DEFAULT_PORCENTAJES_BALDE,
+          dia_inicio_ciclo: remote.dia_inicio_ciclo ?? DEFAULT_DIA_INICIO_CICLO
         }
         setPreferencias(merged)
         await preferenciasStore.setItem('preferencias', merged)

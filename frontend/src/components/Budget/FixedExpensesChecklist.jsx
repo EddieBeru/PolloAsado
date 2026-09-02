@@ -14,7 +14,7 @@ export default function FixedExpensesChecklist({ fijos = [], hayAtrasados = fals
 
     return (
         <div className="card h-full flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Gastos fijos este mes</h3>
+            <h3 className="text-lg font-bold text-text-primary pb-2 border-b border-border-app/30">Gastos fijos del ciclo</h3>
 
             {hayAtrasados && (
                 <p className="notice-warning" role="alert">Se pasó la fecha esperada de algún fijo pendiente.</p>

@@ -7,6 +7,21 @@ const statsStore = localforage.createInstance({
   storeName: 'stats'
 })
 
+// Migración one-shot: el esquema de keys pasó de `range:2026-08` a
+// `range:2026-08-01:2026-08-31`. Las viejas quedan huérfanas; se borran una vez.
+const LEGACY_KEY = /^[a-z-]+(:[a-z]+)?:\d{4}-\d{2}$/
+let legacyCleaned = false
+async function cleanLegacyKeys() {
+  if (legacyCleaned) return
+  legacyCleaned = true
+  try {
+    const keys = await statsStore.keys()
+    await Promise.all(keys.filter(k => LEGACY_KEY.test(k)).map(k => statsStore.removeItem(k)))
+  } catch {
+    // best-effort: si falla, las keys viejas solo ocupan espacio.
+  }
+}
+
 /**
  * Hook genérico offline-first sobre las funciones de stats.js.
  *
@@ -31,6 +46,7 @@ export function useStats(fetcher, deps = [], cacheKey) {
   useEffect(() => {
     let cancelled = false
     const run = async () => {
+      cleanLegacyKeys()
       // 1. Snapshot cacheado -> render inmediato.
       if (cacheKey) {
         const cached = await statsStore.getItem(cacheKey)
